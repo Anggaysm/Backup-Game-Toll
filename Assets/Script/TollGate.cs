@@ -1,60 +1,121 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class TollGate : MonoBehaviour
 {
-    private CarAI currentCar;
     public int level = 1;
+
+    [Header("Upgrade Settings")]
+    public int baseUpgradeCost = 2000;
+    public float costMultiplier = 2.5f;
+    public int maxLevel = 4;
+
+    private Queue<CarAI> carQueue = new Queue<CarAI>();
+    private bool isProcessing = false;
+
+    int GetUpgradeCost()
+    {
+        return Mathf.RoundToInt(baseUpgradeCost * Mathf.Pow(costMultiplier, level - 1));
+    }
+
+    bool IsAuto()
+    {
+        return level >= 2;
+    }
+
     float GetDelay()
     {
         if (level == 1) return 1.5f;
-        if (level == 2) return 2f;
+        if (level == 2) return 1.0f;
         if (level == 3) return 0.5f;
+        if (level == 4) return 0.1f;
 
         return 2f;
+    }
+
+    public void UpgradeGate()
+    {
+        int cost = GetUpgradeCost();
+
+        if (level >= maxLevel)
+        {
+            Debug.Log("SUDAH MAX LEVEL");
+            return;
+        }
+
+        if (GameManager.instance.money >= cost)
+        {
+            GameManager.instance.SpendMoney(cost);
+            level++;
+
+            Debug.Log("Gate upgraded ke level " + level);
+            Debug.Log("Next upgrade cost: " + GetUpgradeCost());
+
+            // 🔥 FIX: langsung jalan kalau jadi auto
+            if (IsAuto())
+            {
+                TryProcessNextCar();
+            }
+        }
+        else
+        {
+            Debug.Log("UANG GA CUKUP");
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Car"))
         {
-            Debug.Log("MOBIL MASUK GATE");
-
             CarAI car = other.GetComponentInParent<CarAI>();
 
             if (car != null)
             {
-                currentCar = car;
-
-                // 🔥 LANGSUNG STOP
                 car.StartPaying();
+                carQueue.Enqueue(car);
+
+                if (IsAuto())
+                {
+                    TryProcessNextCar();
+                }
             }
         }
     }
 
-    // 🔥 DIPANGGIL DARI BUTTON
-    public void PayAndRelease()
+    void TryProcessNextCar()
     {
-        if (currentCar != null)
+        if (!isProcessing && carQueue.Count > 0)
         {
-            StartCoroutine(PayRoutine());
+            StartCoroutine(ProcessCar());
         }
     }
 
-    IEnumerator PayRoutine()
+    public void PayAndRelease()
     {
-        Debug.Log("PROSES BAYAR...");
+        if (level == 1)
+        {
+            TryProcessNextCar();
+        }
+    }
 
-        float delay = GetDelay();
+    IEnumerator ProcessCar()
+    {
+        isProcessing = true;
 
-        yield return new WaitForSeconds(delay);
+        CarAI car = carQueue.Dequeue();
 
-        // 💰 uang masuk
+        yield return new WaitForSeconds(GetDelay());
+
         GameManager.instance.AddMoney(1000);
 
-        // 🚀 mobil jalan lagi
-        currentCar.StopPaying();
+        car.StopPaying();
 
-        currentCar = null;
+        isProcessing = false;
+
+        if (IsAuto())
+        {
+            TryProcessNextCar();
+        }
     }
 }

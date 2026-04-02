@@ -13,6 +13,12 @@ public class GameManager : MonoBehaviour
         instance = this;
     }
 
+    public void SpendMoney(int amount)
+    {
+        money -= amount;
+        moneyText.text = "Money: " + money;
+    }
+
     public void AddMoney(int amount)
     {
         money += amount;
