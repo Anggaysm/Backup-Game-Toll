@@ -1,18 +1,106 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine.UI;
 
 public class TollGate : MonoBehaviour
 {
-    public int level = 1;
+    public Button payButtonComponent;
+
+    [Header("Spawner")]
+    public CarSpawner spawner;
+
+    [Header("Unlock Settings")]
+    public bool isUnlocked = true;
+    public int unlockCost = 5000;
 
     [Header("Upgrade Settings")]
+    public int level = 1;
     public int baseUpgradeCost = 2000;
     public float costMultiplier = 2.5f;
     public int maxLevel = 4;
 
+    public GameObject unlockButton;
+    public GameObject upgradeButton;
+    public GameObject payButton;
+
+    public TextMeshProUGUI unlockText;
+    public TextMeshProUGUI upgradeText;
+    public TextMeshProUGUI levelText;
+
     private Queue<CarAI> carQueue = new Queue<CarAI>();
     private bool isProcessing = false;
+
+    void UpdatePayButtonState()
+    {
+        if (payButtonComponent == null) return;
+
+        bool hasCar = carQueue.Count > 0;
+
+        // enable/disable button
+        payButtonComponent.interactable = hasCar;
+
+        // efek visual (optional biar lebih jelas)
+        CanvasGroup cg = payButtonComponent.GetComponent<CanvasGroup>();
+        if (cg != null)
+        {
+            cg.alpha = hasCar ? 1f : 0.5f;
+        }
+    }
+        
+
+    void UpdateUI()
+    {
+        if (isUnlocked)
+        {
+            unlockButton.SetActive(false);
+            upgradeButton.SetActive(true);
+
+            // 🔥 LEVEL TEXT
+            levelText.text = "Gate Lv." + level;
+
+            // upgrade text
+            upgradeText.text = "Upgrade\n(" + GetUpgradeCost() + ")";
+
+            if (level == 1)
+            {
+                payButton.SetActive(true);
+            }
+            else
+            {
+                payButton.SetActive(false);
+            }
+        }
+        else
+        {
+            unlockButton.SetActive(true);
+            upgradeButton.SetActive(false);
+            payButton.SetActive(false);
+
+            // 🔒 LOCKED TEXT
+            levelText.text = "Locked";
+
+            unlockText.text = "Buka Pintu\n(" + unlockCost + ")";
+        }
+
+        UpdatePayButtonState();
+    }
+
+    void Start()
+    {
+        UpdateSpawnerState();
+        UpdateUI();
+        UpdatePayButtonState();
+    }
+
+    void UpdateSpawnerState()
+    {
+        if (spawner != null)
+        {
+            spawner.SetActive(isUnlocked);
+        }
+    }
 
     int GetUpgradeCost()
     {
@@ -34,6 +122,33 @@ public class TollGate : MonoBehaviour
         return 2f;
     }
 
+    // 🔓 UNLOCK GATE
+    public void UnlockGate()
+    {
+        if (isUnlocked)
+        {
+            Debug.Log("Gate sudah terbuka");
+            return;
+        }
+
+        if (GameManager.instance.money >= unlockCost)
+        {
+            GameManager.instance.SpendMoney(unlockCost);
+            isUnlocked = true;
+
+            Debug.Log("Gate berhasil dibuka!");
+
+            UpdateSpawnerState(); // 🔥 aktifin spawner
+            UpdateUI();
+
+        }
+        else
+        {
+            Debug.Log("Uang tidak cukup!");
+        }
+    }
+
+    // ⬆️ UPGRADE
     public void UpgradeGate()
     {
         int cost = GetUpgradeCost();
@@ -50,9 +165,8 @@ public class TollGate : MonoBehaviour
             level++;
 
             Debug.Log("Gate upgraded ke level " + level);
-            Debug.Log("Next upgrade cost: " + GetUpgradeCost());
+            UpdateUI();
 
-            // 🔥 FIX: langsung jalan kalau jadi auto
             if (IsAuto())
             {
                 TryProcessNextCar();
@@ -66,6 +180,8 @@ public class TollGate : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!isUnlocked) return; // ⛔ gate masih lock
+
         if (other.CompareTag("Car"))
         {
             CarAI car = other.GetComponentInParent<CarAI>();
@@ -74,6 +190,7 @@ public class TollGate : MonoBehaviour
             {
                 car.StartPaying();
                 carQueue.Enqueue(car);
+                UpdatePayButtonState();
 
                 if (IsAuto())
                 {
@@ -104,6 +221,7 @@ public class TollGate : MonoBehaviour
         isProcessing = true;
 
         CarAI car = carQueue.Dequeue();
+        UpdatePayButtonState();
 
         yield return new WaitForSeconds(GetDelay());
 
@@ -112,6 +230,7 @@ public class TollGate : MonoBehaviour
         car.StopPaying();
 
         isProcessing = false;
+        UpdatePayButtonState();
 
         if (IsAuto())
         {
