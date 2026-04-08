@@ -209,9 +209,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ba993a8d6e1bde4398836cbd5eb0d5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  category: 1
   waypoints: []
   speed: 10
   detectionDistance: 6
+  stoppingDistance: 1.5
+  raycastOffset: 1.5
 --- !u!65 &8819849796013086200
 BoxCollider:
   m_ObjectHideFlags: 0

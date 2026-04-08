@@ -32,6 +32,8 @@ public class TollGate : MonoBehaviour
     private Queue<CarAI> carQueue = new Queue<CarAI>();
     private bool isProcessing = false;
 
+    public GameObject maxLevelText;
+
     void UpdatePayButtonState()
     {
         if (payButtonComponent == null) return;
@@ -55,36 +57,62 @@ public class TollGate : MonoBehaviour
         if (isUnlocked)
         {
             unlockButton.SetActive(false);
-            upgradeButton.SetActive(true);
 
             // 🔥 LEVEL TEXT
             levelText.text = "Gate Lv." + level;
 
-            // upgrade text
-            upgradeText.text = "Upgrade\n(" + GetUpgradeCost() + ")";
-
-            if (level == 1)
+            // 🔥 MAX LEVEL CHECK
+            if (level >= maxLevel)
             {
-                payButton.SetActive(true);
+                upgradeButton.SetActive(false);
+                maxLevelText.SetActive(true);
             }
             else
             {
-                payButton.SetActive(false);
+                upgradeButton.SetActive(true);
+                maxLevelText.SetActive(false);
+
+                int cost = GetUpgradeCost();
+                upgradeText.text = "Upgrade\n(" + cost + ")";
+
+                // 🔥 CEK UANG
+                bool canUpgrade = GameManager.instance.money >= cost;
+                SetButtonState(upgradeButton.GetComponent<Button>(), canUpgrade);
             }
+
+            // PAY BUTTON
+            payButton.SetActive(level == 1);
         }
         else
         {
             unlockButton.SetActive(true);
             upgradeButton.SetActive(false);
             payButton.SetActive(false);
+            maxLevelText.SetActive(false);
 
-            // 🔒 LOCKED TEXT
+            // 🔒 TEXT
             levelText.text = "Locked";
-
             unlockText.text = "Buka Pintu\n(" + unlockCost + ")";
+
+            // 🔥 CEK UANG
+            bool canUnlock = GameManager.instance.money >= unlockCost;
+            SetButtonState(unlockButton.GetComponent<Button>(), canUnlock);
         }
 
         UpdatePayButtonState();
+    }
+
+    void SetButtonState(Button btn, bool canAfford)
+    {
+        if (btn == null) return;
+
+        btn.interactable = canAfford;
+
+        CanvasGroup cg = btn.GetComponent<CanvasGroup>();
+        if (cg != null)
+        {
+            cg.alpha = canAfford ? 1f : 0.5f; // redup kalau ga mampu
+        }
     }
 
     void Start()
@@ -92,6 +120,11 @@ public class TollGate : MonoBehaviour
         UpdateSpawnerState();
         UpdateUI();
         UpdatePayButtonState();
+    }
+
+    void Update()
+    {
+        UpdateUI();
     }
 
     void UpdateSpawnerState()
@@ -225,7 +258,7 @@ public class TollGate : MonoBehaviour
 
         yield return new WaitForSeconds(GetDelay());
 
-        GameManager.instance.AddMoney(1000);
+        GameManager.instance.AddMoney(car.GetPrice());
 
         car.StopPaying();
 

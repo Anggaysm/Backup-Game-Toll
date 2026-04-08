@@ -2,6 +2,17 @@ using UnityEngine;
 
 public class CarAI : MonoBehaviour
 {
+    public enum CarCategory
+    {
+        Category1,
+        Category2,
+        Category3,
+        Category4
+    }
+
+    [Header("Toll Settings")]
+    public CarCategory category;
+
     public Transform[] waypoints;
     public float speed = 10f;
 
@@ -14,6 +25,19 @@ public class CarAI : MonoBehaviour
     private int currentWaypoint = 0;
     private bool isPaying = false;
     private float currentSpeed;
+
+    public int GetPrice()
+    {
+        switch (category)
+        {
+            case CarCategory.Category1: return 0;
+            case CarCategory.Category2: return 1000;
+            case CarCategory.Category3: return 2500;
+            case CarCategory.Category4: return 4000;
+        }
+
+        return 0;
+    }
 
     void Start()
     {
