@@ -34,6 +34,11 @@ public class TollGate : MonoBehaviour
 
     public GameObject maxLevelText;
 
+    [Header("Floating Text")]
+    public GameObject floatingTextPrefab;
+    public Camera mainCamera;
+    public Canvas canvas;
+
     void UpdatePayButtonState()
     {
         if (payButtonComponent == null) return;
@@ -168,6 +173,20 @@ public class TollGate : MonoBehaviour
         {
             GameManager.instance.SpendMoney(unlockCost);
             isUnlocked = true;
+            // 🔥 SPAWN TEXT "GATE DIBUKA"
+            Vector3 worldPos = transform.position + Vector3.up * 2f;
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+
+            GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
+            RectTransform rt = ft.GetComponent<RectTransform>();
+            rt.position = screenPos;
+
+            FloatingText ftScript = ft.GetComponent<FloatingText>();
+            if (ftScript != null)
+            {
+                ftScript.SetText("Terbuka");
+                ftScript.SetColor(Color.cyan); 
+            }
 
             Debug.Log("Gate berhasil dibuka!");
 
@@ -196,6 +215,20 @@ public class TollGate : MonoBehaviour
         {
             GameManager.instance.SpendMoney(cost);
             level++;
+            // 🔥 SPAWN TEXT DI ATAS GATE
+            Vector3 worldPos = transform.position + Vector3.up * 3f;
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+
+            GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
+            RectTransform rt = ft.GetComponent<RectTransform>();
+            rt.position = screenPos;
+
+            FloatingText ftScript = ft.GetComponent<FloatingText>();
+            if (ftScript != null)
+            {
+                ftScript.SetText("Upgrade Lv." + level);
+                ftScript.SetColor(Color.green); // optional biar beda
+            }
 
             Debug.Log("Gate upgraded ke level " + level);
             UpdateUI();
@@ -258,7 +291,30 @@ public class TollGate : MonoBehaviour
 
         yield return new WaitForSeconds(GetDelay());
 
-        GameManager.instance.AddMoney(car.GetPrice());
+        // 🔥 AMBIL MONEY
+        int money = car.GetPrice();
+
+        // 🔥 TAMBAH UANG (CUMA SEKALI!)
+        GameManager.instance.AddMoney(money);
+
+        // 🔥 POSISI DI ATAS GATE (WORLD)
+        Vector3 worldPos = transform.position + Vector3.up * 2f;
+
+        // 🔥 CONVERT KE SCREEN
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+
+        // 🔥 SPAWN DI CANVAS
+        GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
+        RectTransform rt = ft.GetComponent<RectTransform>();
+
+        rt.position = screenPos;
+
+        // 🔥 SET TEXT
+        FloatingText ftScript = ft.GetComponent<FloatingText>();
+        if (ftScript != null)
+        {
+            ftScript.SetText("+" + money);
+        }
 
         car.StopPaying();
 

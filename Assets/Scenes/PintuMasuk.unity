@@ -1641,6 +1641,9 @@ MonoBehaviour:
   upgradeText: {fileID: 735691950}
   levelText: {fileID: 1740346192}
   maxLevelText: {fileID: 845701801}
+  floatingTextPrefab: {fileID: 704168657521603133, guid: 4ab73986d2e67604695e4b6d2f629532, type: 3}
+  mainCamera: {fileID: 2140389347}
+  canvas: {fileID: 325547782}
 --- !u!65 &472099887
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1839,6 +1842,9 @@ MonoBehaviour:
   upgradeText: {fileID: 676799278}
   levelText: {fileID: 961357963}
   maxLevelText: {fileID: 1298768112}
+  floatingTextPrefab: {fileID: 704168657521603133, guid: 4ab73986d2e67604695e4b6d2f629532, type: 3}
+  mainCamera: {fileID: 2140389347}
+  canvas: {fileID: 325547782}
 --- !u!65 &661766057
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2200,6 +2206,9 @@ MonoBehaviour:
   upgradeText: {fileID: 389190611}
   levelText: {fileID: 1602070024}
   maxLevelText: {fileID: 1049867341}
+  floatingTextPrefab: {fileID: 704168657521603133, guid: 4ab73986d2e67604695e4b6d2f629532, type: 3}
+  mainCamera: {fileID: 2140389347}
+  canvas: {fileID: 325547782}
 --- !u!1 &711320199
 GameObject:
   m_ObjectHideFlags: 0
@@ -3093,6 +3102,9 @@ MonoBehaviour:
   upgradeText: {fileID: 405655990}
   levelText: {fileID: 1258925024}
   maxLevelText: {fileID: 204817626}
+  floatingTextPrefab: {fileID: 704168657521603133, guid: 4ab73986d2e67604695e4b6d2f629532, type: 3}
+  mainCamera: {fileID: 2140389347}
+  canvas: {fileID: 325547782}
 --- !u!65 &883913642
 BoxCollider:
   m_ObjectHideFlags: 0
