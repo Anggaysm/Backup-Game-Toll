@@ -39,6 +39,12 @@ public class TollGate : MonoBehaviour
     public Camera mainCamera;
     public Canvas canvas;
 
+    [Header("Sound")]
+    public AudioSource audioSource;
+    public AudioClip moneySound;
+    public AudioClip upgradeSound;
+    public AudioClip unlockSound;
+
     void UpdatePayButtonState()
     {
         if (payButtonComponent == null) return;
@@ -176,6 +182,7 @@ public class TollGate : MonoBehaviour
             // 🔥 SPAWN TEXT "GATE DIBUKA"
             Vector3 worldPos = transform.position + Vector3.up * 2f;
             Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+            audioSource.PlayOneShot(unlockSound);
 
             GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
             RectTransform rt = ft.GetComponent<RectTransform>();
@@ -218,6 +225,7 @@ public class TollGate : MonoBehaviour
             // 🔥 SPAWN TEXT DI ATAS GATE
             Vector3 worldPos = transform.position + Vector3.up * 3f;
             Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+            audioSource.PlayOneShot(upgradeSound);
 
             GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
             RectTransform rt = ft.GetComponent<RectTransform>();
@@ -296,6 +304,7 @@ public class TollGate : MonoBehaviour
 
         // 🔥 TAMBAH UANG (CUMA SEKALI!)
         GameManager.instance.AddMoney(money);
+        audioSource.PlayOneShot(moneySound, 0.5f);
 
         // 🔥 POSISI DI ATAS GATE (WORLD)
         Vector3 worldPos = transform.position + Vector3.up * 2f;
