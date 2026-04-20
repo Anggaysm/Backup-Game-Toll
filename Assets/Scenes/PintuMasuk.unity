@@ -1761,8 +1761,8 @@ MonoBehaviour:
   isUnlocked: 0
   unlockCost: 5000
   level: 1
-  baseUpgradeCost: 2000
-  costMultiplier: 2.5
+  baseUpgradeCost: 12000
+  costMultiplier: 6
   maxLevel: 4
   unlockButton: {fileID: 872459103}
   upgradeButton: {fileID: 1501013897}
@@ -2193,8 +2193,8 @@ MonoBehaviour:
   isUnlocked: 0
   unlockCost: 5000
   level: 1
-  baseUpgradeCost: 2000
-  costMultiplier: 2.5
+  baseUpgradeCost: 12000
+  costMultiplier: 5
   maxLevel: 4
   unlockButton: {fileID: 764251737}
   upgradeButton: {fileID: 2108986890}
@@ -3925,13 +3925,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carPrefabs:
-  - {fileID: 4816274774807592279, guid: 63fd56fa937a79e41ac81b5c7d50dc72, type: 3}
-  - {fileID: 8680711857407128887, guid: fa61bfca7aa624744b66f96aa10d8dde, type: 3}
-  - {fileID: 6083710279325868580, guid: 1ef677a056f5b964db80ccb429a37c03, type: 3}
-  - {fileID: 8825474196756590447, guid: 8992f5d1467872445b8fe1c29287e1c1, type: 3}
-  - {fileID: 169112191040035759, guid: 9b9a6e639d46e9d418249fee09e7ef58, type: 3}
-  - {fileID: 1250582677436193499, guid: aa70e523941097a40a3eaa6d988179f0, type: 3}
-  - {fileID: 7672747551691363436, guid: 63416c750e4751c448811dca476ce17d, type: 3}
+  - {fileID: 8508619074856296907, guid: 971fb14c824469341b5b31d3b21c31e3, type: 3}
+  - {fileID: 2580871922734149984, guid: 5b3da4891667c7542bb04c33d79867e8, type: 3}
+  - {fileID: 5316253579714781680, guid: bcd0d0d2617ffda4cbea69a41ab5a011, type: 3}
+  - {fileID: 3739187260669052077, guid: b39656bc8b1b6ae44835e134341c0392, type: 3}
+  - {fileID: 3983824664913784956, guid: f8dbebbe3980a2e478093fd649ffdaaa, type: 3}
+  - {fileID: 7108438249199911049, guid: 4448aed7f467af64aaa3863e3156d7f6, type: 3}
+  - {fileID: 5142150703858535864, guid: 4e716d3fee58a8542be848b4d074141a, type: 3}
+  - {fileID: 8758640334926209028, guid: c2f14a7d11f4d2a49b3e80e799c367ec, type: 3}
   spawnPoint: {fileID: 946846716}
   waypoints:
   - {fileID: 419620351}
@@ -4465,13 +4466,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   carPrefabs:
-  - {fileID: 4816274774807592279, guid: 63fd56fa937a79e41ac81b5c7d50dc72, type: 3}
-  - {fileID: 8680711857407128887, guid: fa61bfca7aa624744b66f96aa10d8dde, type: 3}
-  - {fileID: 6083710279325868580, guid: 1ef677a056f5b964db80ccb429a37c03, type: 3}
-  - {fileID: 8825474196756590447, guid: 8992f5d1467872445b8fe1c29287e1c1, type: 3}
-  - {fileID: 169112191040035759, guid: 9b9a6e639d46e9d418249fee09e7ef58, type: 3}
-  - {fileID: 1250582677436193499, guid: aa70e523941097a40a3eaa6d988179f0, type: 3}
-  - {fileID: 7672747551691363436, guid: 63416c750e4751c448811dca476ce17d, type: 3}
+  - {fileID: 8508619074856296907, guid: 971fb14c824469341b5b31d3b21c31e3, type: 3}
+  - {fileID: 8758640334926209028, guid: c2f14a7d11f4d2a49b3e80e799c367ec, type: 3}
+  - {fileID: 8508619074856296907, guid: 971fb14c824469341b5b31d3b21c31e3, type: 3}
+  - {fileID: 2580871922734149984, guid: 5b3da4891667c7542bb04c33d79867e8, type: 3}
+  - {fileID: 5316253579714781680, guid: bcd0d0d2617ffda4cbea69a41ab5a011, type: 3}
+  - {fileID: 3739187260669052077, guid: b39656bc8b1b6ae44835e134341c0392, type: 3}
+  - {fileID: 3983824664913784956, guid: f8dbebbe3980a2e478093fd649ffdaaa, type: 3}
+  - {fileID: 7108438249199911049, guid: 4448aed7f467af64aaa3863e3156d7f6, type: 3}
+  - {fileID: 5142150703858535864, guid: 4e716d3fee58a8542be848b4d074141a, type: 3}
   spawnPoint: {fileID: 1101451276}
   waypoints:
   - {fileID: 521238106}
@@ -4480,8 +4483,8 @@ MonoBehaviour:
   - {fileID: 64883916}
   spawnInterval: 2
   minSpawnInterval: 1
-  maxSpawnInterval: 4
-  detectionDistance: 6
+  maxSpawnInterval: 3
+  detectionDistance: 11
   maxCarsInQueue: 1
   carLayer:
     serializedVersion: 2
@@ -4495,7 +4498,7 @@ Transform:
   m_GameObject: {fileID: 1101451274}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.4400005, y: 0, z: -49.8}
+  m_LocalPosition: {x: 3.4400005, y: 0, z: -55.85}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
