@@ -20,7 +20,6 @@ public class CarSpawner : MonoBehaviour
     private float currentSpawnInterval;
     private Coroutine spawnCoroutine;
 
-    // 🔥 CONTROL FLAG
     private bool isActive = false;
 
     void Start()
@@ -33,7 +32,6 @@ public class CarSpawner : MonoBehaviour
         }
     }
 
-    // 🔥 FUNCTION CONTROL DARI GATE
     public void SetActive(bool active)
     {
         isActive = active;
@@ -55,28 +53,11 @@ public class CarSpawner : MonoBehaviour
         }
     }
 
-    IEnumerator SpawnWithDetection()
+    // 🔥 METHOD PUBLIC BUAT TOLL GATE - NGEECEK APAKAH AMAN UNTUK SPAWN
+    public bool IsSafeToSpawn()
     {
-        while (isActive)
-        {
-            if (IsSafeToSpawn())
-            {
-                SpawnCar();
-                currentSpawnInterval = Random.Range(minSpawnInterval, maxSpawnInterval);
-            }
-            else
-            {
-                currentSpawnInterval = 0.5f;
-            }
-
-            yield return new WaitForSeconds(currentSpawnInterval);
-        }
-
-        spawnCoroutine = null;
-    }
-
-    bool IsSafeToSpawn()
-    {
+        if (!isActive) return false;
+        
         Collider[] carsInRange = Physics.OverlapSphere(spawnPoint.position, detectionDistance, carLayer);
         
         int activeCarsCount = 0;
@@ -103,6 +84,26 @@ public class CarSpawner : MonoBehaviour
         bool hasEnoughSpace = distanceToNearestCar >= 3f;
         
         return isQueueNotFull && hasEnoughSpace;
+    }
+
+    IEnumerator SpawnWithDetection()
+    {
+        while (isActive)
+        {
+            if (IsSafeToSpawn())
+            {
+                SpawnCar();
+                currentSpawnInterval = Random.Range(minSpawnInterval, maxSpawnInterval);
+            }
+            else
+            {
+                currentSpawnInterval = 0.5f;
+            }
+
+            yield return new WaitForSeconds(currentSpawnInterval);
+        }
+
+        spawnCoroutine = null;
     }
 
     float GetDistanceToNearestCar()

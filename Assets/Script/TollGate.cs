@@ -45,23 +45,249 @@ public class TollGate : MonoBehaviour
     public AudioClip upgradeSound;
     public AudioClip unlockSound;
 
+    [Header("Traffic Pressure")]
+    public float maxCountdown = 5f;
+    private float currentCountdown;
+    public int penaltyMoney = 1000;
+    private bool isTrafficJam = false;
+    private bool wasTrafficJam = false;
+
+    [Header("Penalty Counter")]
+    public int maxPenaltyCount = 3; // Maksimal kena penalty sebelum game over
+    private int currentPenaltyCount = 0; // Counter penalty saat ini
+
+    float jamDetectTimer = 0f;
+    public float jamThreshold = 2f; // harus macet 2 detik baru dianggap macet
+
+    [Header("Traffic UI")]
+    public TextMeshProUGUI trafficText;
+    public CanvasGroup trafficCanvasGroup;
+
+    void Start()
+    {
+        UpdateSpawnerState();
+        UpdateUI();
+        UpdatePayButtonState();
+        
+        Debug.Log($"=== TOLL GATE READY ===");
+        Debug.Log($"Gate Level: {level}, Unlocked: {isUnlocked}");
+        Debug.Log($"Max Countdown: {maxCountdown}, Penalty: {penaltyMoney}");
+        Debug.Log($"Max Penalty Count: {maxPenaltyCount} kali");
+    }
+
+    void Update()
+    {
+        UpdateUI();
+        HandleTrafficPressure();
+        UpdateTrafficUIPosition();
+    }
+
     void UpdatePayButtonState()
     {
         if (payButtonComponent == null) return;
 
         bool hasCar = carQueue.Count > 0;
+        bool canPay = hasCar && !isProcessing;
 
-        // enable/disable button
-        payButtonComponent.interactable = hasCar;
+        payButtonComponent.interactable = canPay;
 
-        // efek visual (optional biar lebih jelas)
         CanvasGroup cg = payButtonComponent.GetComponent<CanvasGroup>();
         if (cg != null)
         {
-            cg.alpha = hasCar ? 1f : 0.5f;
+            cg.alpha = canPay ? 1f : 0.5f;
         }
     }
+
+    void HandleTrafficPressure()
+    {
+        if (!isUnlocked)
+        {
+            // 🔒 GATE MASIH TUTUP
+            if (trafficText != null)
+            {
+                trafficText.text = "TUTUP";
+                trafficText.color = Color.gray;
+
+                if (trafficCanvasGroup != null)
+                    trafficCanvasGroup.alpha = 1f;
+            }
+
+            return;
+        }
         
+        // CEK APAKAH SPAWNER LAGI MACET
+        bool unsafeToSpawn = !spawner.IsSafeToSpawn();
+
+        if (unsafeToSpawn)
+        {
+            jamDetectTimer += Time.deltaTime;
+
+            if (jamDetectTimer >= jamThreshold)
+            {
+                isTrafficJam = true;
+            }
+        }
+        else
+        {
+            jamDetectTimer = 0f;
+            isTrafficJam = false;
+        }
+        
+        // DEBUG
+        if (Time.frameCount % 60 == 0)
+        {
+            Debug.Log($"🚦 Status: {(isTrafficJam ? "MACET" : "LANCAR")} | Timer: {(isTrafficJam ? currentCountdown.ToString("F1") : "0")} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
+        }
+        
+        // =========================
+        // 🔥 UI MACET (INI YANG DITAMBAHIN)
+        // =========================
+        if (trafficText != null)
+        {
+            if (isTrafficJam)
+            {
+                trafficText.text = "MACET!\n" + Mathf.Ceil(currentCountdown).ToString();
+
+                // warna berubah
+                if (currentCountdown <= 1.5f)
+                    trafficText.color = Color.red;
+                else
+                    trafficText.color = Color.yellow;
+
+                if (trafficCanvasGroup != null)
+                    trafficCanvasGroup.alpha = 1f;
+            }
+            else
+            {
+                if (trafficCanvasGroup != null)
+                    trafficCanvasGroup.alpha = 0f;
+            }
+        }
+        // =========================
+        
+        if (isTrafficJam)
+        {
+            if (!wasTrafficJam)
+            {
+                currentCountdown = maxCountdown;
+                Debug.Log($"⚠️ MACET DETEKSI! Countdown {maxCountdown} detik dimulai");
+                wasTrafficJam = true;
+            }
+            
+            currentCountdown -= Time.deltaTime;
+            
+            if (currentCountdown <= 1f && currentCountdown > 0)
+            {
+                Debug.Log($"⚠️ {currentCountdown:F1} DETIK LAGI KENA DENDA!");
+            }
+            
+            if (currentCountdown <= 0)
+            {
+                ApplyPenalty();
+                currentCountdown = maxCountdown;
+            }
+        }
+        else
+        {
+            if (wasTrafficJam)
+            {
+                Debug.Log($"✅ MACET SELESAI! LANCAR LAGI - Penalty counter di-reset ke 0");
+                wasTrafficJam = false;
+                currentCountdown = maxCountdown;
+                currentPenaltyCount = 0;
+            }
+        }
+    }
+
+    void ShowWarningText(string message, Color color)
+    {
+        if (floatingTextPrefab == null || mainCamera == null || canvas == null) return;
+        
+        Vector3 worldPos = transform.position + Vector3.up * 4f;
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+        
+        GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
+        RectTransform rt = ft.GetComponent<RectTransform>();
+        rt.position = screenPos;
+        
+        FloatingText ftScript = ft.GetComponent<FloatingText>();
+        if (ftScript != null)
+        {
+            ftScript.SetText(message);
+            ftScript.SetColor(color);
+        }
+        
+        Destroy(ft, 1.5f);
+    }
+
+    void ApplyPenalty()
+    {
+        // TAMBAH COUNTER PENALTY
+        currentPenaltyCount++;
+        
+        Debug.Log($"⚠️ PENALTY KE-{currentPenaltyCount} dari {maxPenaltyCount}");
+        
+        // CEK APAKAH UDAH MELEWATI BATAS PENALTY
+        if (currentPenaltyCount >= maxPenaltyCount)
+        {
+            Debug.Log($"💀 GAME OVER! Sudah kena penalty {currentPenaltyCount} kali (maksimal {maxPenaltyCount})");
+            ShowWarningText($"PENALTY KE-{currentPenaltyCount}! GAME OVER!", Color.red);
+            GameOver();
+            return;
+        }
+        
+        // KALO BELUM SAMPE BATAS, KURANGIN DUIT
+        if (GameManager.instance.money >= penaltyMoney)
+        {
+            GameManager.instance.SpendMoney(penaltyMoney);
+            Debug.Log($"💸 DENDA! -{penaltyMoney} | Sisa uang: {GameManager.instance.money} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
+            
+            // Tampilkan penalty text
+            if (floatingTextPrefab != null && mainCamera != null && canvas != null)
+            {
+                Vector3 worldPos = transform.position + Vector3.up * 3f;
+                Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+                
+                GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
+                RectTransform rt = ft.GetComponent<RectTransform>();
+                rt.position = screenPos;
+                
+                FloatingText ftScript = ft.GetComponent<FloatingText>();
+                if (ftScript != null)
+                {
+                    ftScript.SetText($"-{penaltyMoney}\n({currentPenaltyCount}/{maxPenaltyCount})");
+                    ftScript.SetColor(Color.red);
+                }
+            }
+            
+            // CEK JUGA KALO DUIT HABIS
+            if (GameManager.instance.money <= 0)
+            {
+                Debug.Log($"💀 GAME OVER! Uang habis!");
+                GameOver();
+            }
+        }
+        else
+        {
+            Debug.Log($"💀 GAME OVER! Uang tidak cukup bayar denda {penaltyMoney}");
+            GameOver();
+        }
+    }
+
+    void GameOver()
+    {
+        Debug.Log($"💀💀💀 GAME OVER! 💀💀💀");
+        Debug.Log($"Total penalty: {currentPenaltyCount} kali");
+        Debug.Log($"Sisa uang: {GameManager.instance.money}");
+        Time.timeScale = 0f;
+    }
+
+    // RESET PENALTY COUNTER (bisa dipanggil kalo misalkan upgrade atau unlock)
+    public void ResetPenaltyCounter()
+    {
+        currentPenaltyCount = 0;
+        Debug.Log($"🔄 Penalty counter di-reset! Sekarang: {currentPenaltyCount}/{maxPenaltyCount}");
+    }
 
     void UpdateUI()
     {
@@ -69,10 +295,8 @@ public class TollGate : MonoBehaviour
         {
             unlockButton.SetActive(false);
 
-            // 🔥 LEVEL TEXT
             levelText.text = "Gate Lv." + level;
 
-            // 🔥 MAX LEVEL CHECK
             if (level >= maxLevel)
             {
                 upgradeButton.SetActive(false);
@@ -86,12 +310,10 @@ public class TollGate : MonoBehaviour
                 int cost = GetUpgradeCost();
                 upgradeText.text = "Upgrade\n(" + cost + ")";
 
-                // 🔥 CEK UANG
                 bool canUpgrade = GameManager.instance.money >= cost;
                 SetButtonState(upgradeButton.GetComponent<Button>(), canUpgrade);
             }
 
-            // PAY BUTTON
             payButton.SetActive(level == 1);
         }
         else
@@ -101,11 +323,9 @@ public class TollGate : MonoBehaviour
             payButton.SetActive(false);
             maxLevelText.SetActive(false);
 
-            // 🔒 TEXT
             levelText.text = "Locked";
             unlockText.text = "Buka Pintu\n(" + unlockCost + ")";
 
-            // 🔥 CEK UANG
             bool canUnlock = GameManager.instance.money >= unlockCost;
             SetButtonState(unlockButton.GetComponent<Button>(), canUnlock);
         }
@@ -122,20 +342,8 @@ public class TollGate : MonoBehaviour
         CanvasGroup cg = btn.GetComponent<CanvasGroup>();
         if (cg != null)
         {
-            cg.alpha = canAfford ? 1f : 0.5f; // redup kalau ga mampu
+            cg.alpha = canAfford ? 1f : 0.5f;
         }
-    }
-
-    void Start()
-    {
-        UpdateSpawnerState();
-        UpdateUI();
-        UpdatePayButtonState();
-    }
-
-    void Update()
-    {
-        UpdateUI();
     }
 
     void UpdateSpawnerState()
@@ -162,11 +370,9 @@ public class TollGate : MonoBehaviour
         if (level == 2) return 1.0f;
         if (level == 3) return 0.5f;
         if (level == 4) return 0.1f;
-
         return 2f;
     }
 
-    // 🔓 UNLOCK GATE
     public void UnlockGate()
     {
         if (isUnlocked)
@@ -179,7 +385,10 @@ public class TollGate : MonoBehaviour
         {
             GameManager.instance.SpendMoney(unlockCost);
             isUnlocked = true;
-            // 🔥 SPAWN TEXT "GATE DIBUKA"
+            
+            // Reset penalty counter pas unlock gate
+            ResetPenaltyCounter();
+            
             Vector3 worldPos = transform.position + Vector3.up * 2f;
             Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
             audioSource.PlayOneShot(unlockSound);
@@ -195,26 +404,23 @@ public class TollGate : MonoBehaviour
                 ftScript.SetColor(Color.cyan); 
             }
 
-            Debug.Log("Gate berhasil dibuka!");
-
-            UpdateSpawnerState(); // 🔥 aktifin spawner
+            Debug.Log($"🔓 GATE DIBUKA! Uang tersisa: {GameManager.instance.money}");
+            UpdateSpawnerState();
             UpdateUI();
-
         }
         else
         {
-            Debug.Log("Uang tidak cukup!");
+            Debug.Log($"Uang tidak cukup! Butuh: {unlockCost}, Punya: {GameManager.instance.money}");
         }
     }
 
-    // ⬆️ UPGRADE
     public void UpgradeGate()
     {
         int cost = GetUpgradeCost();
 
         if (level >= maxLevel)
         {
-            Debug.Log("SUDAH MAX LEVEL");
+            Debug.Log("Gate sudah level MAX!");
             return;
         }
 
@@ -222,7 +428,10 @@ public class TollGate : MonoBehaviour
         {
             GameManager.instance.SpendMoney(cost);
             level++;
-            // 🔥 SPAWN TEXT DI ATAS GATE
+            
+            // Reset penalty counter pas upgrade (opsional, bisa dihapus kalo ga mau)
+            ResetPenaltyCounter();
+            
             Vector3 worldPos = transform.position + Vector3.up * 3f;
             Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
             audioSource.PlayOneShot(upgradeSound);
@@ -235,10 +444,10 @@ public class TollGate : MonoBehaviour
             if (ftScript != null)
             {
                 ftScript.SetText("Upgrade Lv." + level);
-                ftScript.SetColor(Color.green); // optional biar beda
+                ftScript.SetColor(Color.green);
             }
 
-            Debug.Log("Gate upgraded ke level " + level);
+            Debug.Log($"⬆️ GATE UPGRADE ke Level {level} | Uang tersisa: {GameManager.instance.money}");
             UpdateUI();
 
             if (IsAuto())
@@ -248,13 +457,13 @@ public class TollGate : MonoBehaviour
         }
         else
         {
-            Debug.Log("UANG GA CUKUP");
+            Debug.Log($"Uang tidak cukup upgrade! Butuh: {cost}, Punya: {GameManager.instance.money}");
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!isUnlocked) return; // ⛔ gate masih lock
+        if (!isUnlocked) return;
 
         if (other.CompareTag("Car"))
         {
@@ -265,6 +474,8 @@ public class TollGate : MonoBehaviour
                 car.StartPaying();
                 carQueue.Enqueue(car);
                 UpdatePayButtonState();
+                
+                Debug.Log($"🚗 MOBIL MASUK | Total antrian: {carQueue.Count}");
 
                 if (IsAuto())
                 {
@@ -293,32 +504,27 @@ public class TollGate : MonoBehaviour
     IEnumerator ProcessCar()
     {
         isProcessing = true;
+        UpdatePayButtonState();
 
         CarAI car = carQueue.Dequeue();
-        UpdatePayButtonState();
+        
+        Debug.Log($"🔄 PROSES MOBIL | Sisa: {carQueue.Count}");
 
         yield return new WaitForSeconds(GetDelay());
 
-        // 🔥 AMBIL MONEY
         int money = car.GetPrice();
-
-        // 🔥 TAMBAH UANG (CUMA SEKALI!)
         GameManager.instance.AddMoney(money);
         audioSource.PlayOneShot(moneySound, 0.5f);
+        
+        Debug.Log($"💰 +{money} | Total: {GameManager.instance.money}");
 
-        // 🔥 POSISI DI ATAS GATE (WORLD)
         Vector3 worldPos = transform.position + Vector3.up * 2f;
-
-        // 🔥 CONVERT KE SCREEN
         Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
 
-        // 🔥 SPAWN DI CANVAS
         GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
         RectTransform rt = ft.GetComponent<RectTransform>();
-
         rt.position = screenPos;
 
-        // 🔥 SET TEXT
         FloatingText ftScript = ft.GetComponent<FloatingText>();
         if (ftScript != null)
         {
@@ -326,13 +532,25 @@ public class TollGate : MonoBehaviour
         }
 
         car.StopPaying();
+        
+        yield return new WaitForSeconds(0.3f);
 
         isProcessing = false;
         UpdatePayButtonState();
 
-        if (IsAuto())
+        if (IsAuto() && carQueue.Count > 0)
         {
             TryProcessNextCar();
         }
+    }
+
+    void UpdateTrafficUIPosition()
+    {
+        if (trafficText == null) return;
+
+        Vector3 worldPos = transform.position + Vector3.up * 4f;
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+
+        trafficText.transform.position = screenPos;
     }
 }
