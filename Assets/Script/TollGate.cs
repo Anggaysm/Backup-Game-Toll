@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class TollGate : MonoBehaviour
 {
@@ -62,6 +63,7 @@ public class TollGate : MonoBehaviour
     [Header("Traffic UI")]
     public TextMeshProUGUI trafficText;
     public CanvasGroup trafficCanvasGroup;
+
 
     void Start()
     {
@@ -232,7 +234,7 @@ public class TollGate : MonoBehaviour
         {
             Debug.Log($"💀 GAME OVER! Sudah kena penalty {currentPenaltyCount} kali (maksimal {maxPenaltyCount})");
             ShowWarningText($"PENALTY KE-{currentPenaltyCount}! GAME OVER!", Color.red);
-            GameOver();
+            GameManager.instance.GameOver();;
             return;
         }
         
@@ -264,23 +266,16 @@ public class TollGate : MonoBehaviour
             if (GameManager.instance.money <= 0)
             {
                 Debug.Log($"💀 GAME OVER! Uang habis!");
-                GameOver();
+                GameManager.instance.GameOver();;
             }
         }
         else
         {
             Debug.Log($"💀 GAME OVER! Uang tidak cukup bayar denda {penaltyMoney}");
-            GameOver();
+            GameManager.instance.GameOver();;
         }
     }
 
-    void GameOver()
-    {
-        Debug.Log($"💀💀💀 GAME OVER! 💀💀💀");
-        Debug.Log($"Total penalty: {currentPenaltyCount} kali");
-        Debug.Log($"Sisa uang: {GameManager.instance.money}");
-        Time.timeScale = 0f;
-    }
 
     // RESET PENALTY COUNTER (bisa dipanggil kalo misalkan upgrade atau unlock)
     public void ResetPenaltyCounter()
@@ -553,4 +548,6 @@ public class TollGate : MonoBehaviour
 
         trafficText.transform.position = screenPos;
     }
+
+    
 }
