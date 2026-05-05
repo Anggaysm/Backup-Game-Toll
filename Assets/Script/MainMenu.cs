@@ -26,4 +26,9 @@ public class MainMenu : MonoBehaviour
         Application.Quit();
     }
 
+    public void BackHome()
+    {
+        SceneManager.LoadScene("HomeScreen");
+    }
+
 }

@@ -3,17 +3,10 @@ using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
-
 public class GameManager : MonoBehaviour
 {
-    private int targetMoney;
-    private float displayMoney;
-    public float moneyLerpSpeed = 5f;
     public static GameManager instance;
-    public TextMeshProUGUI moneyText;
-
-    public int money = 0;
-
+    
     public GameObject gameOverPanel;
     public TextMeshProUGUI finalMoneyText;
 
@@ -22,38 +15,12 @@ public class GameManager : MonoBehaviour
     public float fadeSpeed = 2f;
     public RectTransform gameOverText;
 
-
     void Awake()
     {
         instance = this;
-        targetMoney = money;
-        displayMoney = money;
     }
 
-    public void SpendMoney(int amount)
-    {
-        money -= amount;
-        targetMoney = money;
-    }
-
-    public void AddMoney(int amount)
-    {
-        money += amount;
-        Debug.Log("Money: " + money);
-        targetMoney = money;
-    }
-
-    void Update()
-    {
-        displayMoney = Mathf.Lerp(displayMoney, targetMoney, moneyLerpSpeed * Time.deltaTime);
-
-        if (Mathf.Abs(displayMoney - targetMoney) < 0.5f)
-        {
-            displayMoney = targetMoney;
-        }
-
-        moneyText.text = "Money: " + Mathf.RoundToInt(displayMoney);
-    }
+    // UPDATE DIHAPUS AJA GA PERLU
 
     public void GameOver()
     {
@@ -64,14 +31,12 @@ public class GameManager : MonoBehaviour
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
 
-        if (finalMoneyText != null)
-            finalMoneyText.text = "Money: " + money;
+        if (finalMoneyText != null && MoneyManager.instance != null)
+            finalMoneyText.text = "Money: " + MoneyManager.instance.money;
 
-        // 🔥 reset scale dulu
         if (gameOverText != null)
             gameOverText.localScale = Vector3.zero;
 
-        // 🔥 JALANKAN COROUTINE
         StartCoroutine(FadeInGameOver());
     }
 
@@ -96,11 +61,9 @@ public class GameManager : MonoBehaviour
         {
             t += Time.unscaledDeltaTime * fadeSpeed;
 
-            // fade panel
             if (gameOverCanvasGroup != null)
                 gameOverCanvasGroup.alpha = t;
 
-            // pop text
             if (gameOverText != null)
             {
                 float scale = Mathf.Lerp(0f, 1f, t);
@@ -116,6 +79,4 @@ public class GameManager : MonoBehaviour
         if (gameOverText != null)
             gameOverText.localScale = Vector3.one;
     }
-
-    
 }

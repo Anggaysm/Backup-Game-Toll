@@ -239,10 +239,10 @@ public class TollGate : MonoBehaviour
         }
         
         // KALO BELUM SAMPE BATAS, KURANGIN DUIT
-        if (GameManager.instance.money >= penaltyMoney)
+        if (MoneyManager.instance.money >= penaltyMoney)
         {
-            GameManager.instance.SpendMoney(penaltyMoney);
-            Debug.Log($"💸 DENDA! -{penaltyMoney} | Sisa uang: {GameManager.instance.money} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
+            MoneyManager.instance.SpendMoney(penaltyMoney);
+            Debug.Log($"💸 DENDA! -{penaltyMoney} | Sisa uang: {MoneyManager.instance.money} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
             
             // Tampilkan penalty text
             if (floatingTextPrefab != null && mainCamera != null && canvas != null)
@@ -263,7 +263,7 @@ public class TollGate : MonoBehaviour
             }
             
             // CEK JUGA KALO DUIT HABIS
-            if (GameManager.instance.money <= 0)
+            if (MoneyManager.instance.money <= 0)
             {
                 Debug.Log($"💀 GAME OVER! Uang habis!");
                 GameManager.instance.GameOver();;
@@ -305,7 +305,7 @@ public class TollGate : MonoBehaviour
                 int cost = GetUpgradeCost();
                 upgradeText.text = "Upgrade\n(" + cost + ")";
 
-                bool canUpgrade = GameManager.instance.money >= cost;
+                bool canUpgrade = MoneyManager.instance.money >= cost;
                 SetButtonState(upgradeButton.GetComponent<Button>(), canUpgrade);
             }
 
@@ -321,7 +321,7 @@ public class TollGate : MonoBehaviour
             levelText.text = "Locked";
             unlockText.text = "Buka Pintu\n(" + unlockCost + ")";
 
-            bool canUnlock = GameManager.instance.money >= unlockCost;
+            bool canUnlock = MoneyManager.instance.money >= unlockCost;
             SetButtonState(unlockButton.GetComponent<Button>(), canUnlock);
         }
 
@@ -376,9 +376,9 @@ public class TollGate : MonoBehaviour
             return;
         }
 
-        if (GameManager.instance.money >= unlockCost)
+        if (MoneyManager.instance.money >= unlockCost)
         {
-            GameManager.instance.SpendMoney(unlockCost);
+            MoneyManager.instance.SpendMoney(unlockCost);
             isUnlocked = true;
             
             // Reset penalty counter pas unlock gate
@@ -399,13 +399,13 @@ public class TollGate : MonoBehaviour
                 ftScript.SetColor(Color.cyan); 
             }
 
-            Debug.Log($"🔓 GATE DIBUKA! Uang tersisa: {GameManager.instance.money}");
+            Debug.Log($"🔓 GATE DIBUKA! Uang tersisa: {MoneyManager.instance.money}");
             UpdateSpawnerState();
             UpdateUI();
         }
         else
         {
-            Debug.Log($"Uang tidak cukup! Butuh: {unlockCost}, Punya: {GameManager.instance.money}");
+            Debug.Log($"Uang tidak cukup! Butuh: {unlockCost}, Punya: {MoneyManager.instance.money}");
         }
     }
 
@@ -419,9 +419,9 @@ public class TollGate : MonoBehaviour
             return;
         }
 
-        if (GameManager.instance.money >= cost)
+        if (MoneyManager.instance.money >= cost)
         {
-            GameManager.instance.SpendMoney(cost);
+            MoneyManager.instance.SpendMoney(cost);
             level++;
             
             // Reset penalty counter pas upgrade (opsional, bisa dihapus kalo ga mau)
@@ -442,7 +442,7 @@ public class TollGate : MonoBehaviour
                 ftScript.SetColor(Color.green);
             }
 
-            Debug.Log($"⬆️ GATE UPGRADE ke Level {level} | Uang tersisa: {GameManager.instance.money}");
+            Debug.Log($"⬆️ GATE UPGRADE ke Level {level} | Uang tersisa: {MoneyManager.instance.money}");
             UpdateUI();
 
             if (IsAuto())
@@ -452,7 +452,7 @@ public class TollGate : MonoBehaviour
         }
         else
         {
-            Debug.Log($"Uang tidak cukup upgrade! Butuh: {cost}, Punya: {GameManager.instance.money}");
+            Debug.Log($"Uang tidak cukup upgrade! Butuh: {cost}, Punya: {MoneyManager.instance.money}");
         }
     }
 
@@ -508,10 +508,10 @@ public class TollGate : MonoBehaviour
         yield return new WaitForSeconds(GetDelay());
 
         int money = car.GetPrice();
-        GameManager.instance.AddMoney(money);
+        MoneyManager.instance.AddMoney(money);
         audioSource.PlayOneShot(moneySound, 0.5f);
         
-        Debug.Log($"💰 +{money} | Total: {GameManager.instance.money}");
+        Debug.Log($"💰 +{money} | Total: {MoneyManager.instance.money}");
 
         Vector3 worldPos = transform.position + Vector3.up * 2f;
         Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
