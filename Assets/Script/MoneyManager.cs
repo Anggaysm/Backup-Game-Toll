@@ -23,7 +23,7 @@ public class MoneyManager : MonoBehaviour
 
     void Start()
     {
-        money = PlayerPrefs.GetInt("Money", 1000);
+        money = PlayerPrefs.GetInt("Money", 0);
     }
 
     public void AddMoney(int amount)

@@ -64,9 +64,17 @@ public class TollGate : MonoBehaviour
     public TextMeshProUGUI trafficText;
     public CanvasGroup trafficCanvasGroup;
 
+    [Header("Save System")]
+    public string gateID;
+
+    [Header("Queue Detection Area")]
+    public float queueDetectRadius = 10f;
+    public LayerMask carLayer;
+
 
     void Start()
     {
+        LoadProgress();
         UpdateSpawnerState();
         UpdateUI();
         UpdatePayButtonState();
@@ -82,6 +90,10 @@ public class TollGate : MonoBehaviour
         UpdateUI();
         HandleTrafficPressure();
         UpdateTrafficUIPosition();
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            Debug.Log("QUEUE DATA ADV: " + GetQueueDataAdvanced());
+        }
     }
 
     void UpdatePayButtonState()
@@ -380,7 +392,8 @@ public class TollGate : MonoBehaviour
         {
             MoneyManager.instance.SpendMoney(unlockCost);
             isUnlocked = true;
-            
+            SaveProgress();
+
             // Reset penalty counter pas unlock gate
             ResetPenaltyCounter();
             
@@ -423,6 +436,7 @@ public class TollGate : MonoBehaviour
         {
             MoneyManager.instance.SpendMoney(cost);
             level++;
+            SaveProgress();
             
             // Reset penalty counter pas upgrade (opsional, bisa dihapus kalo ga mau)
             ResetPenaltyCounter();
@@ -549,5 +563,86 @@ public class TollGate : MonoBehaviour
         trafficText.transform.position = screenPos;
     }
 
+    void SaveProgress()
+    {
+        if (string.IsNullOrEmpty(gateID))
+        {
+            Debug.LogWarning("GateID kosong!");
+            return;
+        }
+
+        PlayerPrefs.SetInt(gateID + "_level", level);
+        PlayerPrefs.SetInt(gateID + "_unlock", isUnlocked ? 1 : 0);
+
+        PlayerPrefs.Save();
+
+        Debug.Log($"💾 SAVE {gateID} | Level: {level} | Unlock: {isUnlocked}");
+    }
+
+    void LoadProgress()
+    {
+        if (string.IsNullOrEmpty(gateID))
+        {
+            Debug.LogWarning("GateID kosong!");
+            return;
+        }
+
+        level = PlayerPrefs.GetInt(gateID + "_level", level);
+        isUnlocked = PlayerPrefs.GetInt(gateID + "_unlock", isUnlocked ? 1 : 0) == 1;
+
+        Debug.Log($"📥 LOAD {gateID} | Level: {level} | Unlock: {isUnlocked}");
+    }
+
+    string GetQueueData()
+    {
+        if (carQueue.Count == 0)
+            return "";
+
+        List<string> data = new List<string>();
+
+        foreach (CarAI car in carQueue)
+        {
+            if (car != null)
+            {
+                string carData = car.carID + "|" + car.category.ToString();
+                data.Add(carData);
+            }
+        }
+
+        return string.Join(",", data);
+    }
+
+    string GetQueueDataAdvanced()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, queueDetectRadius, carLayer);
+
+        List<CarAI> cars = new List<CarAI>();
+
+        foreach (Collider hit in hits)
+        {
+            CarAI car = hit.GetComponentInParent<CarAI>();
+            if (car != null && !car.HasReachedDestination())
+            {
+                cars.Add(car);
+            }
+        }
+
+        // 🔥 SORT berdasarkan jarak ke gate (dekat duluan)
+        cars.Sort((a, b) =>
+            Vector3.Distance(a.transform.position, transform.position)
+            .CompareTo(Vector3.Distance(b.transform.position, transform.position))
+        );
+
+        // 🔥 CONVERT ke string
+        List<string> data = new List<string>();
+
+        foreach (CarAI car in cars)
+        {
+            string carData = car.carID + "|" + car.category.ToString();
+            data.Add(carData);
+        }
+
+        return string.Join(",", data);
+    }
     
 }

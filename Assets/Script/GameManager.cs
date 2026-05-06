@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -20,12 +21,9 @@ public class GameManager : MonoBehaviour
         instance = this;
     }
 
-    // UPDATE DIHAPUS AJA GA PERLU
-
     public void GameOver()
     {
         Debug.Log("GAME OVER!");
-
         Time.timeScale = 0f;
 
         if (gameOverPanel != null)

@@ -1923,6 +1923,11 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 625686274}
   trafficCanvasGroup: {fileID: 625686273}
+  gateID: Gate_Cililitan_4
+  queueDetectRadius: 15
+  carLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!65 &472099887
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2792,6 +2797,11 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 1892656877}
   trafficCanvasGroup: {fileID: 1892656876}
+  gateID: Gate_Cililitan_3
+  queueDetectRadius: 15
+  carLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!65 &661766057
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3402,6 +3412,11 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 659353040}
   trafficCanvasGroup: {fileID: 659353039}
+  gateID: Gate_Cililitan_1
+  queueDetectRadius: 15
+  carLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!82 &691657562
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4542,6 +4557,11 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 887911593}
   trafficCanvasGroup: {fileID: 887911592}
+  gateID: Gate_Cililitan_2
+  queueDetectRadius: 15
+  carLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!65 &883913642
 BoxCollider:
   m_ObjectHideFlags: 0

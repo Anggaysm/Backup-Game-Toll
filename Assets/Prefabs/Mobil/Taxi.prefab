@@ -214,6 +214,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ba993a8d6e1bde4398836cbd5eb0d5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  carID: Taxi
   category: 1
   waypoints: []
   speed: 10

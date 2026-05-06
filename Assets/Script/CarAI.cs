@@ -10,6 +10,9 @@ public class CarAI : MonoBehaviour
         Category4
     }
 
+    [Header("Car Identity")]
+    public string carID;
+
     [Header("Toll Settings")]
     public CarCategory category;
 
