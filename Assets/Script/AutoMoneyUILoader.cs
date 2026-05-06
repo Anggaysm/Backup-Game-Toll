@@ -32,16 +32,16 @@ public class AutoMoneyUILoader : MonoBehaviour
     
     void LoadMoneyUI()
     {
-        // Cari Canvas di scene
-        Canvas canvas = FindObjectOfType<Canvas>();
+        // Cari Canvas di scene - menggunakan FindFirstObjectByType
+        Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             Debug.LogWarning($"Scene {SceneManager.GetActiveScene().name} tidak punya Canvas!");
             return;
         }
         
-        // Cek apakah sudah ada UI Money di scene ini
-        if (FindObjectOfType<UangDisplay>() != null)
+        // Cek apakah sudah ada UI Money di scene ini - menggunakan FindFirstObjectByType
+        if (FindFirstObjectByType<UangDisplay>() != null)
         {
             Debug.Log("UI Money sudah ada, skip loading");
             return;

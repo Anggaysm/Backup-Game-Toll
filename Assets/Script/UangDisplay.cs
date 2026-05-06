@@ -14,7 +14,7 @@ public class UangDisplay : MonoBehaviour
     {
         if (MoneyManager.instance != null && textComponent != null)
         {
-            textComponent.text = $"💰 {MoneyManager.instance.money}";
+            textComponent.text = $" {MoneyManager.instance.money}";
         }
     }
 }
