@@ -12,6 +12,7 @@ public class CarAI : MonoBehaviour
 
     [Header("Car Identity")]
     public string carID;
+    public int queueNumber;
 
     [Header("Toll Settings")]
     public CarCategory category;

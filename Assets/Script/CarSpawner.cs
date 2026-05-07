@@ -141,6 +141,46 @@ public class CarSpawner : MonoBehaviour
         }
     }
 
+    public void SpawnSpecificCar(string carID)
+    {
+        if (carPrefabs == null || carPrefabs.Length == 0)
+            return;
+
+        GameObject selectedPrefab = null;
+
+        foreach (GameObject prefab in carPrefabs)
+        {
+            CarAI ai = prefab.GetComponent<CarAI>();
+
+            if (ai != null && ai.carID == carID)
+            {
+                selectedPrefab = prefab;
+                break;
+            }
+        }
+
+        if (selectedPrefab == null)
+        {
+            Debug.LogWarning("❌ Prefab tidak ditemukan: " + carID);
+            return;
+        }
+
+        GameObject car = Instantiate(
+            selectedPrefab,
+            spawnPoint.position,
+            Quaternion.identity
+        );
+
+        CarAI aiSpawned = car.GetComponent<CarAI>();
+
+        if (aiSpawned != null)
+        {
+            aiSpawned.waypoints = waypoints;
+        }
+
+        Debug.Log("🚗 RESTORE SPAWN: " + carID);
+    }
+
     void OnDrawGizmosSelected()
     {
         if (spawnPoint != null)
@@ -150,6 +190,40 @@ public class CarSpawner : MonoBehaviour
             
             Gizmos.color = Color.green;
             Gizmos.DrawSphere(spawnPoint.position, 0.5f);
+        }
+    }
+
+    public bool IsSpawnAreaClear()
+    {
+        Collider[] hits = Physics.OverlapSphere(
+            spawnPoint.position,
+            detectionDistance,
+            carLayer
+        );
+
+        return hits.Length == 0;
+    }
+
+    public void StopSpawner()
+    {
+        isActive = false;
+
+        if (spawnCoroutine != null)
+        {
+            StopCoroutine(spawnCoroutine);
+            spawnCoroutine = null;
+        }
+    }
+
+    public void StartSpawner()
+    {
+        if (isActive) return;
+
+        isActive = true;
+
+        if (spawnCoroutine == null)
+        {
+            spawnCoroutine = StartCoroutine(SpawnWithDetection());
         }
     }
 }
