@@ -6,7 +6,7 @@ public class FloatingText : MonoBehaviour
     public float moveSpeed = 2f;
     public float fadeDuration = 2.5f;
 
-    public float popScale = 1.5f;
+    public float popScale = 0.8f;
     public float popSpeed = 10f;
 
     private TextMeshProUGUI textMesh;

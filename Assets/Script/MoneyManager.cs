@@ -5,6 +5,7 @@ public class MoneyManager : MonoBehaviour
 {
     public static MoneyManager instance;
 
+    public int startingMoney = 0;
     public int money;
     
     void Awake()
@@ -23,7 +24,7 @@ public class MoneyManager : MonoBehaviour
 
     void Start()
     {
-        money = PlayerPrefs.GetInt("Money", 0);
+        money = PlayerPrefs.GetInt("Money", startingMoney);
     }
 
     public void AddMoney(int amount)
@@ -44,5 +45,13 @@ public class MoneyManager : MonoBehaviour
     public int GetMoney()
     {
         return money;
+    }
+    public void ResetMoney()
+    {
+        money = startingMoney;
+
+        PlayerPrefs.SetInt("Money", money);
+
+        Debug.Log($"💰 Money di-reset ke {money}");
     }
 }

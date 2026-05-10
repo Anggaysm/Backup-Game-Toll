@@ -12,7 +12,7 @@ public class CarAI : MonoBehaviour
 
     [Header("Car Identity")]
     public string carID;
-    public int queueNumber;
+    // HAPUS: public int queueNumber;
 
     [Header("Toll Settings")]
     public CarCategory category;
@@ -22,36 +22,42 @@ public class CarAI : MonoBehaviour
 
     [Header("Detection")]
     public float detectionDistance = 3f;
-    private float baseSpeed; // Tambahkan variabel baseSpeed
-    public float stoppingDistance = 1.5f; // Jarak aman berhenti dari mobil depan
-    public float raycastOffset = 1.5f;    // Offset raycast dari depan mobil
+    private float baseSpeed;
+    public float stoppingDistance = 1.5f;
+    public float raycastOffset = 1.5f;
+
+    [Header("Queue System")]
+    [HideInInspector] public bool IsInQueue = false;
+
+    [Header("Debug")]
+    public bool showDebugLogs = true;
 
     private int currentWaypoint = 0;
     private bool isPaying = false;
     private float currentSpeed;
-
-    public int GetPrice()
-    {
-        switch (category)
-        {
-            case CarCategory.Category1: return 0;
-            case CarCategory.Category2: return 1000;
-            case CarCategory.Category3: return 2500;
-            case CarCategory.Category4: return 4000;
-        }
-
-        return 0;
-    }
+    private bool isDestroyed = false;
 
     void Start()
     {
         speed = Random.Range(8f, 12f);
         currentSpeed = speed;
+        baseSpeed = speed;
+        
+        if (string.IsNullOrEmpty(carID))
+        {
+            carID = gameObject.name + "_" + System.Guid.NewGuid().ToString().Substring(0, 8);
+        }
+        
+        if (gameObject.layer != LayerMask.NameToLayer("Car"))
+        {
+            gameObject.layer = LayerMask.NameToLayer("Car");
+        }
     }
 
     void Update()
     {
-        // ⛔ STOP kalau lagi bayar
+        if (isDestroyed) return;
+        
         if (isPaying) 
         {
             currentSpeed = 0f;
@@ -62,8 +68,12 @@ public class CarAI : MonoBehaviour
         if (currentWaypoint >= waypoints.Length) return;
 
         Transform target = waypoints[currentWaypoint];
+        if (target == null)
+        {
+            currentWaypoint++;
+            return;
+        }
 
-        // ===== DETEKSI MOBIL DEPAN DENGAN STOPPING DISTANCE =====
         bool isBlocked = false;
         float distanceToObstacle = detectionDistance;
 
@@ -79,18 +89,14 @@ public class CarAI : MonoBehaviour
             }
         }
 
-        // ===== PERBAIKAN: AJUST SPEED BERDASARKAN JARAK =====
         if (isBlocked)
         {
-            // Jika terlalu dekat, berhenti total
             if (distanceToObstacle <= stoppingDistance)
             {
                 currentSpeed = 0f;
             }
-            // Jika masih agak jauh, pelan-pelan
             else if (distanceToObstacle < detectionDistance)
             {
-                // Gradual slowdown berdasarkan jarak
                 float speedMultiplier = (distanceToObstacle - stoppingDistance) / (detectionDistance - stoppingDistance);
                 currentSpeed = Mathf.Lerp(0f, speed, speedMultiplier);
             }
@@ -101,30 +107,20 @@ public class CarAI : MonoBehaviour
         }
         else
         {
-            // Accelerate kembali ke speed normal
             currentSpeed = Mathf.Min(currentSpeed + Time.deltaTime * 10f, speed);
         }
 
-        // ===== GERAK DENGAN SMOOTH FOLLOW =====
         Vector3 newPosition = Vector3.MoveTowards(
             transform.position,
             target.position,
             currentSpeed * Time.deltaTime
         );
 
-        // ===== PERBAIKAN: CEK TABRAKAN SEBELUM PINDAH =====
-        // Cek apakah posisi baru akan menabrak mobil depan
-        if (isBlocked && distanceToObstacle <= stoppingDistance + 0.5f)
-        {
-            // Jangan bergerak maju jika terlalu dekat
-            // Tetap di posisi sekarang
-        }
-        else
+        if (!isBlocked || distanceToObstacle > stoppingDistance + 0.5f)
         {
             transform.position = newPosition;
         }
 
-        // ===== ROTASI =====
         Vector3 direction = (target.position - transform.position).normalized;
         if (direction != Vector3.zero)
         {
@@ -132,55 +128,83 @@ public class CarAI : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, rot, 5f * Time.deltaTime);
         }
 
-        // ===== WAYPOINT =====
-        if (Vector3.Distance(transform.position, target.position) < 0.3f)
+        if (Vector3.Distance(transform.position, target.position) < 0.5f)
         {
             currentWaypoint++;
 
             if (currentWaypoint >= waypoints.Length)
             {
-                Destroy(gameObject);
+                if (IsInQueue)
+                {
+                    IsInQueue = false;
+                }
+                StartCoroutine(DestroyWithDelay());
             }
         }
     }
 
-    // ===== TOLL SYSTEM =====
-    public void StopPaying()
+    System.Collections.IEnumerator DestroyWithDelay()
     {
-        isPaying = false;
-        currentSpeed = speed; // Reset speed setelah selesai bayar
+        yield return new WaitForSeconds(0.5f);
+        if (!isDestroyed)
+        {
+            isDestroyed = true;
+            Destroy(gameObject);
+        }
+    }
+
+    public int GetPrice()
+    {
+        switch (category)
+        {
+            case CarCategory.Category1: return 0;
+            case CarCategory.Category2: return 1000;
+            case CarCategory.Category3: return 2500;
+            case CarCategory.Category4: return 4000;
+            default: return 0;
+        }
     }
 
     public void StartPaying()
     {
+        if (isDestroyed) return;
         isPaying = true;
         currentSpeed = 0f;
+        if (showDebugLogs)
+            Debug.Log($"🚗 {carID} mulai bayar");
     }
 
-    // Optional: Visualisasi untuk debugging
-    void OnDrawGizmosSelected()
+    public void StopPaying()
     {
-        // Visualisasi raycast
-        Gizmos.color = Color.red;
-        Vector3 rayOrigin = transform.position + transform.forward * raycastOffset + Vector3.up * 0.5f;
-        Gizmos.DrawRay(rayOrigin, transform.forward * detectionDistance);
-        
-        // Visualisasi stopping distance
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(rayOrigin + transform.forward * stoppingDistance, 0.3f);
+        if (isDestroyed) return;
+        isPaying = false;
+        currentSpeed = speed;
+        if (showDebugLogs)
+            Debug.Log($"🚗 {carID} selesai bayar");
     }
 
-    // Tambahkan ke CarAI.cs
     public bool HasReachedDestination()
     {
-        return currentWaypoint >= waypoints.Length;
+        return currentWaypoint >= waypoints.Length || isDestroyed;
     }
 
-    // Optional: Method untuk menyesuaikan speed berdasarkan kepadatan
-    public void SetSpeedBasedOnTraffic(float trafficDensity)
+    public void ResetForRestore()
     {
-        // Kurangi speed jika lalu lintas padat
-        float speedMultiplier = Mathf.Lerp(1f, 0.5f, trafficDensity);
-        speed = baseSpeed * speedMultiplier;
+        if (!isDestroyed)
+        {
+            isPaying = false;
+            IsInQueue = true;
+            currentSpeed = speed;
+            currentWaypoint = 0;
+        }
     }
+
+    void OnDestroy()
+    {
+        if (!isDestroyed)
+        {
+            isDestroyed = true;
+        }
+    }
+    
 }

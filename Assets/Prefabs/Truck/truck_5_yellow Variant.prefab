@@ -186,7 +186,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ba993a8d6e1bde4398836cbd5eb0d5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  carID: Truck5
+  carID: truck_5_yellow Variant
+  queueNumber: 0
   category: 2
   waypoints: []
   speed: 10

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class TollGate : MonoBehaviour
 {
@@ -33,8 +32,6 @@ public class TollGate : MonoBehaviour
     private Queue<CarAI> carQueue = new Queue<CarAI>();
     private bool isProcessing = false;
 
-    private int nextQueueNumber = 1;
-
     public GameObject maxLevelText;
 
     [Header("Floating Text")]
@@ -54,11 +51,8 @@ public class TollGate : MonoBehaviour
     public int penaltyMoney = 1000;
     private bool isTrafficJam = false;
     private bool wasTrafficJam = false;
-
-    [Header("Penalty Counter")]
     public int maxPenaltyCount = 3;
     private int currentPenaltyCount = 0;
-
     float jamDetectTimer = 0f;
     public float jamThreshold = 2f;
 
@@ -66,37 +60,51 @@ public class TollGate : MonoBehaviour
     public TextMeshProUGUI trafficText;
     public CanvasGroup trafficCanvasGroup;
 
-    [Header("Save System")]
+    [Header("Save System - SIMPLE")]
     public string gateID;
-    private string loadedQueueData;
-    private bool isRestoringTraffic = false;
-
+    private int savedQueueCount = 0; // SIMPAN JUMLAH SAJA
+    
     [Header("Queue Detector")]
     public QueueDetector queueDetector;
+    private bool isRestoringTraffic = false;
 
-    [Header("Loading UI")]
-    public GameObject loadingPanel;
+    [Header("Layer Settings")]
+    public LayerMask carLayer;
 
-    // NEW: Auto-save timer
+    
+
     private float autoSaveTimer = 0f;
-    public float autoSaveInterval = 5f; // Save setiap 5 detik
+    public float autoSaveInterval = 5f;
 
     void Start()
     {
         LoadProgress();
 
         if (spawner != null)
-            spawner.StopSpawner();
+        {
+            spawner.SetActive(isUnlocked);
+            if (isUnlocked) spawner.StartSpawner();
+        }
 
-        StartCoroutine(RestoreQueueTraffic());
+        if (savedQueueCount > 0)
+        {
+            LoadingManager.instance.ShowLoading("Loading Traffic...");
 
+            StartCoroutine(StartRestoreDelay());
+        }
+        
         UpdateUI();
         UpdatePayButtonState();
 
-        Debug.Log($"=== TOLL GATE READY ===");
-        Debug.Log($"Gate Level: {level}, Unlocked: {isUnlocked}");
-        Debug.Log($"Max Countdown: {maxCountdown}, Penalty: {penaltyMoney}");
-        Debug.Log($"Max Penalty Count: {maxPenaltyCount} kali");
+        Debug.Log($"=== TOLL GATE {gateID} READY | Level: {level} | Unlocked: {isUnlocked} ===");
+    }
+
+    IEnumerator StartRestoreDelay()
+    {
+        yield return null;
+        yield return new WaitForSeconds(0.2f);
+
+        StartCoroutine(RestoreQueueSimple());
     }
 
     void Update()
@@ -105,433 +113,140 @@ public class TollGate : MonoBehaviour
         HandleTrafficPressure();
         UpdateTrafficUIPosition();
         
-        // AUTO-SAVE setiap beberapa detik
         autoSaveTimer += Time.deltaTime;
         if (autoSaveTimer >= autoSaveInterval)
         {
             autoSaveTimer = 0f;
-            SaveProgress();
+            SaveProgressSimple(); // SAVE SIMPLE dan CEPAT
+        }
+    }
+
+    // ==================== SAVE SYSTEM SIMPLE ====================
+    
+    void SaveProgressSimple()
+    {
+        if (string.IsNullOrEmpty(gateID)) return;
+
+        // Simpan data dasar
+        PlayerPrefs.SetInt(gateID + "_level", level);
+        PlayerPrefs.SetInt(gateID + "_unlock", isUnlocked ? 1 : 0);
+        PlayerPrefs.SetInt(gateID + "_penaltyCount", currentPenaltyCount);
+        
+        // SIMPLE: Simpan jumlah mobil di queue area
+        int queueCount = GetQueueCount();
+        PlayerPrefs.SetInt(gateID + "_queueCount", queueCount);
+        
+        if (MoneyManager.instance != null)
+        {
+            PlayerPrefs.SetInt("TotalMoney", MoneyManager.instance.money);
+        }
+
+        PlayerPrefs.Save();
+        
+        Debug.Log($"💾 SAVE SIMPLE {gateID} | Level: {level} | Queue Count: {queueCount}");
+    }
+
+    void LoadProgress()
+    {
+        if (string.IsNullOrEmpty(gateID)) return;
+
+        level = PlayerPrefs.GetInt(gateID + "_level", level);
+        isUnlocked = PlayerPrefs.GetInt(gateID + "_unlock", isUnlocked ? 1 : 0) == 1;
+        currentPenaltyCount = PlayerPrefs.GetInt(gateID + "_penaltyCount", 0);
+        
+        // SIMPLE: Load jumlah queue
+        savedQueueCount = PlayerPrefs.GetInt(gateID + "_queueCount", 0);
+
+        Debug.Log($"📥 LOAD SIMPLE {gateID} | Level: {level} | Saved Queue Count: {savedQueueCount}");
+    }
+
+    int GetQueueCount()
+    {
+        // Hitung dari queueDetector (lebih akurat)
+        if (queueDetector != null && queueDetector.queuedCars != null)
+        {
+            return queueDetector.queuedCars.Count;
         }
         
-        // Manual save with Q key (tetap jalan)
-        if (Input.GetKeyDown(KeyCode.Q))
+        // Fallback ke carQueue
+        if (carQueue != null)
         {
-            SaveProgress();
-            string savedQueue = PlayerPrefs.GetString(gateID + "_queue");
-            Debug.Log("QUEUE SAVED: " + savedQueue);
-        }
-    }
-
-    // FIX 1: Save otomatis pas keluar dari scene/object di-destroy
-    void OnDestroy()
-    {
-        Debug.Log($"🔄 {gateID} - OnDestroy called! Saving before destruction...");
-        SaveProgress();
-    }
-
-    // FIX 2: Save pas aplikasi ditutup
-    void OnApplicationQuit()
-    {
-        Debug.Log($"🔄 {gateID} - Application quitting! Saving final state...");
-        SaveProgress();
-    }
-
-    // FIX 3: Save pas script di-disable
-    void OnDisable()
-    {
-        Debug.Log($"🔄 {gateID} - OnDisable called! Saving before disable...");
-        SaveProgress();
-    }
-
-    void UpdatePayButtonState()
-    {
-        if (payButtonComponent == null) return;
-
-        bool hasCar = carQueue.Count > 0;
-        bool canPay = hasCar && !isProcessing && level == 1;
-
-        payButtonComponent.interactable = canPay;
-
-        CanvasGroup cg = payButtonComponent.GetComponent<CanvasGroup>();
-        if (cg != null)
-        {
-            cg.alpha = canPay ? 1f : 0.5f;
-        }
-    }
-
-    void HandleTrafficPressure()
-    {
-        if (isRestoringTraffic)
-        {
-            return;
-        }
-        if (!isUnlocked)
-        {
-            if (trafficText != null)
-            {
-                trafficText.text = "TUTUP";
-                trafficText.color = Color.gray;
-
-                if (trafficCanvasGroup != null)
-                    trafficCanvasGroup.alpha = 1f;
-            }
-            return;
+            return carQueue.Count;
         }
         
-        bool unsafeToSpawn = false;
+        return 0;
+    }
+
+    // ==================== RESTORE SIMPLE ====================
+    
+    IEnumerator RestoreQueueSimple()
+    {
+        isRestoringTraffic = true;
+        if (savedQueueCount <= 0)
+        {
+            Debug.Log($"✅ Tidak ada queue untuk direstore (count: {savedQueueCount})");
+            yield break;
+        }
+        
+        // TAMPILKAN LOADING
+        if (LoadingManager.instance != null)
+        {
+            yield return null;
+        }
+        else
+        {
+            Debug.LogError("❌ LoadingManager.instance tidak ditemukan!");
+        }
+
+        Debug.Log($"🚦 MULAI RESTORE SIMPLE: {savedQueueCount} mobil akan dispawan");
+
         if (spawner != null)
-        {
-            // Pastikan method IsSafeToSpawn ada
-            unsafeToSpawn = !spawner.IsSafeToSpawn();
-        }
-        else
-        {
-            Debug.LogWarning("Spawner not assigned!");
-        }
+            spawner.SetActive(false);
 
-        if (unsafeToSpawn)
+        for (int i = 0; i < savedQueueCount; i++)
         {
-            jamDetectTimer += Time.deltaTime;
+            // UPDATE PROGRESS
+            if (LoadingManager.instance != null)
+            {
+                float progress = (float)(i + 1) / savedQueueCount;
+                int percent = Mathf.RoundToInt(progress * 100f);
 
-            if (jamDetectTimer >= jamThreshold)
-            {
-                isTrafficJam = true;
-            }
-        }
-        else
-        {
-            jamDetectTimer = 0f;
-            isTrafficJam = false;
-        }
-        
-        if (Time.frameCount % 60 == 0)
-        {
-            Debug.Log($"🚦 Status: {(isTrafficJam ? "MACET" : "LANCAR")} | Timer: {(isTrafficJam ? currentCountdown.ToString("F1") : "0")} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
-        }
-        
-        if (trafficText != null)
-        {
-            if (isTrafficJam)
-            {
-                trafficText.text = "MACET!\n" + Mathf.Ceil(currentCountdown).ToString();
-                trafficText.color = (currentCountdown <= 1.5f) ? Color.red : Color.yellow;
-
-                if (trafficCanvasGroup != null)
-                    trafficCanvasGroup.alpha = 1f;
-            }
-            else
-            {
-                if (trafficCanvasGroup != null)
-                    trafficCanvasGroup.alpha = 0f;
-            }
-        }
-        
-        if (isTrafficJam)
-        {
-            if (!wasTrafficJam)
-            {
-                currentCountdown = maxCountdown;
-                Debug.Log($"⚠️ MACET DETEKSI! Countdown {maxCountdown} detik dimulai");
-                wasTrafficJam = true;
+                LoadingManager.instance.UpdateMessage(percent + "%");
             }
             
-            currentCountdown -= Time.deltaTime;
+            Debug.Log($"🚗 RESTORE MOBIL KE-{i+1} dari {savedQueueCount}");
             
-            if (currentCountdown <= 1f && currentCountdown > 0)
+            if (spawner != null)
             {
-                Debug.Log($"⚠️ {currentCountdown:F1} DETIK LAGI KENA DENDA!");
-            }
-            
-            if (currentCountdown <= 0)
-            {
-                ApplyPenalty();
-                currentCountdown = maxCountdown;
-            }
-        }
-        else
-        {
-            if (wasTrafficJam)
-            {
-                Debug.Log($"✅ MACET SELESAI! LANCAR LAGI - Penalty counter di-reset ke 0");
-                wasTrafficJam = false;
-                currentCountdown = maxCountdown;
-                currentPenaltyCount = 0;
-                SaveProgress(); // FIX: Save saat macet selesai
-            }
-        }
-    }
-
-    void ShowWarningText(string message, Color color)
-    {
-        if (floatingTextPrefab == null || mainCamera == null || canvas == null) return;
-        
-        Vector3 worldPos = transform.position + Vector3.up * 4f;
-        Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
-        
-        GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
-        RectTransform rt = ft.GetComponent<RectTransform>();
-        rt.position = screenPos;
-        
-        FloatingText ftScript = ft.GetComponent<FloatingText>();
-        if (ftScript != null)
-        {
-            ftScript.SetText(message);
-            ftScript.SetColor(color);
-        }
-        
-        Destroy(ft, 1.5f);
-    }
-
-    void ApplyPenalty()
-    {
-        currentPenaltyCount++;
-        
-        Debug.Log($"⚠️ PENALTY KE-{currentPenaltyCount} dari {maxPenaltyCount}");
-        
-        if (currentPenaltyCount >= maxPenaltyCount)
-        {
-            Debug.Log($"💀 GAME OVER! Sudah kena penalty {currentPenaltyCount} kali (maksimal {maxPenaltyCount})");
-            ShowWarningText($"PENALTY KE-{currentPenaltyCount}! GAME OVER!", Color.red);
-            
-            if (GameManager.instance != null)
-                GameManager.instance.GameOver();
-            else
-                Debug.LogError("GameManager.instance is NULL! Cannot call GameOver.");
-            
-            return;
-        }
-        
-        if (MoneyManager.instance != null && MoneyManager.instance.money >= penaltyMoney)
-        {
-            MoneyManager.instance.SpendMoney(penaltyMoney);
-            Debug.Log($"💸 DENDA! -{penaltyMoney} | Sisa uang: {MoneyManager.instance.money} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
-            SaveProgress(); // FIX: Save setelah kena penalty
-            
-            if (floatingTextPrefab != null && mainCamera != null && canvas != null)
-            {
-                Vector3 worldPos = transform.position + Vector3.up * 3f;
-                Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
-                
-                GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
-                RectTransform rt = ft.GetComponent<RectTransform>();
-                rt.position = screenPos;
-                
-                FloatingText ftScript = ft.GetComponent<FloatingText>();
-                if (ftScript != null)
-                {
-                    ftScript.SetText($"-{penaltyMoney}\n({currentPenaltyCount}/{maxPenaltyCount})");
-                    ftScript.SetColor(Color.red);
-                }
+                spawner.SpawnRandomCar();
             }
             
-            if (MoneyManager.instance.money <= 0)
-            {
-                Debug.Log($"💀 GAME OVER! Uang habis!");
-                if (GameManager.instance != null)
-                    GameManager.instance.GameOver();
-            }
-        }
-        else
-        {
-            Debug.Log($"💀 GAME OVER! Uang tidak cukup bayar denda {penaltyMoney}");
-            if (GameManager.instance != null)
-                GameManager.instance.GameOver();
-        }
-    }
-
-    public void ResetPenaltyCounter()
-    {
-        currentPenaltyCount = 0;
-        Debug.Log($"🔄 Penalty counter di-reset! Sekarang: {currentPenaltyCount}/{maxPenaltyCount}");
-        SaveProgress(); // FIX: Save saat reset penalty
-    }
-
-    void UpdateUI()
-    {
-        if (isUnlocked)
-        {
-            unlockButton.SetActive(false);
-
-            levelText.text = "Gate Lv." + level;
-
-            if (level >= maxLevel)
-            {
-                upgradeButton.SetActive(false);
-                if (maxLevelText != null) maxLevelText.SetActive(true);
-            }
-            else
-            {
-                upgradeButton.SetActive(true);
-                if (maxLevelText != null) maxLevelText.SetActive(false);
-
-                int cost = GetUpgradeCost();
-                upgradeText.text = "Upgrade\n(" + cost + ")";
-
-                bool canUpgrade = MoneyManager.instance != null && MoneyManager.instance.money >= cost;
-                SetButtonState(upgradeButton.GetComponent<Button>(), canUpgrade);
-            }
-
-            if (payButton != null) payButton.SetActive(level == 1);
-        }
-        else
-        {
-            if (unlockButton != null) unlockButton.SetActive(true);
-            if (upgradeButton != null) upgradeButton.SetActive(false);
-            if (payButton != null) payButton.SetActive(false);
-            if (maxLevelText != null) maxLevelText.SetActive(false);
-
-            if (levelText != null) levelText.text = "Locked";
-            if (unlockText != null) unlockText.text = "Buka Pintu\n(" + unlockCost + ")";
-
-            bool canUnlock = MoneyManager.instance != null && MoneyManager.instance.money >= unlockCost;
-            if (unlockButton != null) SetButtonState(unlockButton.GetComponent<Button>(), canUnlock);
+            yield return new WaitForSeconds(0.95f);
         }
 
-        UpdatePayButtonState();
-    }
-
-    void SetButtonState(Button btn, bool canAfford)
-    {
-        if (btn == null) return;
-
-        btn.interactable = canAfford;
-
-        CanvasGroup cg = btn.GetComponent<CanvasGroup>();
-        if (cg != null)
-        {
-            cg.alpha = canAfford ? 1f : 0.5f;
-        }
-    }
-
-    void UpdateSpawnerState()
-    {
         if (spawner != null)
+            spawner.SetActive(true);
+
+        if (isUnlocked && spawner != null)
         {
-            spawner.SetActive(isUnlocked);
+            spawner.StartSpawner();
+        }
+        
+        PlayerPrefs.SetInt(gateID + "_queueCount", 0);
+        PlayerPrefs.Save();
+        
+        Debug.Log($"✅ RESTORE SIMPLE SELESAI: {savedQueueCount} mobil telah dispawan");
+        
+        isRestoringTraffic = false;
+        // SEMBUNYIKAN LOADING
+        if (LoadingManager.instance != null)
+        {
+            LoadingManager.instance.HideLoading();
         }
     }
 
-    int GetUpgradeCost()
-    {
-        return Mathf.RoundToInt(baseUpgradeCost * Mathf.Pow(costMultiplier, level - 1));
-    }
-
-    bool IsAuto()
-    {
-        return level >= 2;
-    }
-
-    float GetDelay()
-    {
-        if (level == 1) return 1.5f;
-        if (level == 2) return 1.0f;
-        if (level == 3) return 0.5f;
-        if (level == 4) return 0.1f;
-        return 2f;
-    }
-
-    public void UnlockGate()
-    {
-        if (isUnlocked)
-        {
-            Debug.Log("Gate sudah terbuka");
-            return;
-        }
-
-        if (MoneyManager.instance != null && MoneyManager.instance.money >= unlockCost)
-        {
-            MoneyManager.instance.SpendMoney(unlockCost);
-            isUnlocked = true;
-            SaveProgress();
-            ResetPenaltyCounter();
-            
-            if (mainCamera != null && canvas != null)
-            {
-                Vector3 worldPos = transform.position + Vector3.up * 2f;
-                Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
-                
-                if (audioSource != null && unlockSound != null)
-                    audioSource.PlayOneShot(unlockSound);
-
-                if (floatingTextPrefab != null)
-                {
-                    GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
-                    RectTransform rt = ft.GetComponent<RectTransform>();
-                    if (rt != null) rt.position = screenPos;
-
-                    FloatingText ftScript = ft.GetComponent<FloatingText>();
-                    if (ftScript != null)
-                    {
-                        ftScript.SetText("Terbuka");
-                        ftScript.SetColor(Color.cyan);
-                    }
-                }
-            }
-
-            Debug.Log($"🔓 GATE DIBUKA! Uang tersisa: {MoneyManager.instance.money}");
-            UpdateSpawnerState();
-            UpdateUI();
-        }
-        else
-        {
-            Debug.Log($"Uang tidak cukup! Butuh: {unlockCost}, Punya: {(MoneyManager.instance != null ? MoneyManager.instance.money : 0)}");
-        }
-    }
-
-    public void UpgradeGate()
-    {
-        int cost = GetUpgradeCost();
-
-        if (level >= maxLevel)
-        {
-            Debug.Log("Gate sudah level MAX!");
-            return;
-        }
-
-        if (MoneyManager.instance != null && MoneyManager.instance.money >= cost)
-        {
-            MoneyManager.instance.SpendMoney(cost);
-            level++;
-            SaveProgress();
-            ResetPenaltyCounter();
-            
-            if (mainCamera != null && canvas != null)
-            {
-                Vector3 worldPos = transform.position + Vector3.up * 3f;
-                Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
-                
-                if (audioSource != null && upgradeSound != null)
-                    audioSource.PlayOneShot(upgradeSound);
-
-                if (floatingTextPrefab != null)
-                {
-                    GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
-                    RectTransform rt = ft.GetComponent<RectTransform>();
-                    if (rt != null) rt.position = screenPos;
-
-                    FloatingText ftScript = ft.GetComponent<FloatingText>();
-                    if (ftScript != null)
-                    {
-                        ftScript.SetText("Upgrade Lv." + level);
-                        ftScript.SetColor(Color.green);
-                    }
-                }
-            }
-
-            Debug.Log($"⬆️ GATE UPGRADE ke Level {level} | Uang tersisa: {MoneyManager.instance.money}");
-            UpdateUI();
-
-            if (IsAuto())
-            {
-                TryProcessNextCar();
-            }
-        }
-        else
-        {
-            Debug.Log($"Uang tidak cukup upgrade! Butuh: {cost}, Punya: {(MoneyManager.instance != null ? MoneyManager.instance.money : 0)}");
-        }
-    }
-
+    // ==================== TOLL GATE LOGIC (SAMA) ====================
+    
     private void OnTriggerEnter(Collider other)
     {
         if (!isUnlocked) return;
@@ -540,17 +255,22 @@ public class TollGate : MonoBehaviour
         {
             CarAI car = other.GetComponentInParent<CarAI>();
 
-            if (car != null)
+            if (car != null && !carQueue.Contains(car))
             {
-                car.queueNumber = nextQueueNumber;
-                nextQueueNumber++;
+                car.IsInQueue = true;
 
                 car.StartPaying();
                 carQueue.Enqueue(car);
-                UpdatePayButtonState();
-                SaveProgress(); // FIX: Save saat ada mobil masuk antrian
                 
-                Debug.Log($"🚗 MOBIL MASUK | Queue Number: {car.queueNumber} | Total: {carQueue.Count}");
+                if (queueDetector != null && !queueDetector.queuedCars.Contains(car))
+                {
+                    queueDetector.queuedCars.Add(car);
+                }
+                
+                UpdatePayButtonState();
+                SaveProgressSimple(); // Langsung save simple
+                
+                Debug.Log($"🚗 MOBIL MASUK | Total: {carQueue.Count}");
                 
                 if (IsAuto())
                 {
@@ -560,28 +280,18 @@ public class TollGate : MonoBehaviour
         }
     }
 
-    void TryProcessNextCar()
-    {
-        if (!isProcessing && carQueue.Count > 0)
-        {
-            StartCoroutine(ProcessCar());
-        }
-    }
-
-    public void PayAndRelease()
-    {
-        if (level == 1)
-        {
-            TryProcessNextCar();
-        }
-    }
-
     IEnumerator ProcessCar()
     {
         isProcessing = true;
         UpdatePayButtonState();
 
         CarAI car = carQueue.Dequeue();
+        car.IsInQueue = false;
+        
+        if (queueDetector != null && queueDetector.queuedCars.Contains(car))
+        {
+            queueDetector.queuedCars.Remove(car);
+        }
         
         Debug.Log($"🔄 PROSES MOBIL | Sisa: {carQueue.Count}");
 
@@ -601,16 +311,9 @@ public class TollGate : MonoBehaviour
         {
             Vector3 worldPos = transform.position + Vector3.up * 2f;
             Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
-
             GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
-            RectTransform rt = ft.GetComponent<RectTransform>();
-            if (rt != null) rt.position = screenPos;
-
-            FloatingText ftScript = ft.GetComponent<FloatingText>();
-            if (ftScript != null)
-            {
-                ftScript.SetText("+" + money);
-            }
+            ft.GetComponent<RectTransform>().position = screenPos;
+            ft.GetComponent<FloatingText>().SetText("+" + money);
         }
 
         car.StopPaying();
@@ -619,7 +322,7 @@ public class TollGate : MonoBehaviour
 
         isProcessing = false;
         UpdatePayButtonState();
-        SaveProgress(); // FIX: Save setelah proses mobil selesai
+        SaveProgressSimple(); // Save setelah proses
 
         if (IsAuto() && carQueue.Count > 0)
         {
@@ -627,167 +330,348 @@ public class TollGate : MonoBehaviour
         }
     }
 
+    // ==================== METHOD LAIN (TIDAK BERUBAH) ====================
+    
+    void UpdatePayButtonState()
+    {
+        if (payButtonComponent == null) return;
+        bool hasCar = carQueue.Count > 0;
+        bool canPay = hasCar && !isProcessing && level == 1;
+        payButtonComponent.interactable = canPay;
+    }
+
+    void HandleTrafficPressure()
+    {
+        if (isRestoringTraffic)
+            return;
+
+        if (!isUnlocked)
+        {
+            if (trafficText != null)
+            {
+                trafficText.text = "TUTUP";
+                trafficText.color = Color.gray;
+                if (trafficCanvasGroup != null)
+                    trafficCanvasGroup.alpha = 1f;
+            }
+            return;
+        }
+        
+        bool unsafeToSpawn = false;
+        if (spawner != null && spawner.isActiveAndEnabled)
+        {
+            bool hasActiveCars = CheckIfAnyCarsExist();
+            if (hasActiveCars)
+            {
+                unsafeToSpawn = !spawner.IsSafeToSpawn();
+            }
+        }
+
+        if (unsafeToSpawn)
+        {
+            jamDetectTimer += Time.deltaTime;
+            if (jamDetectTimer >= jamThreshold)
+            {
+                isTrafficJam = true;
+            }
+        }
+        else
+        {
+            jamDetectTimer = 0f;
+            if (isTrafficJam)
+            {
+                isTrafficJam = false;
+                wasTrafficJam = false;
+                currentCountdown = maxCountdown;
+                currentPenaltyCount = 0;
+            }
+        }
+        
+        // DEBUG LOG SETIAP 60 FRAME
+        if (Time.frameCount % 60 == 0)
+        {
+            Debug.Log($"🚦 Status: {(isTrafficJam ? "MACET" : "LANCAR")} | Timer: {(isTrafficJam ? currentCountdown.ToString("F1") : "0")} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
+        }
+        
+        // UPDATE UI TRAFFIC
+        if (trafficText != null)
+        {
+            if (isTrafficJam)
+            {
+                trafficText.text = "MACET!\n" + Mathf.Ceil(currentCountdown).ToString();
+                trafficText.color = (currentCountdown <= 1.5f) ? Color.red : Color.yellow;
+                if (trafficCanvasGroup != null)
+                    trafficCanvasGroup.alpha = 1f;
+            }
+            else
+            {
+                if (trafficCanvasGroup != null)
+                    trafficCanvasGroup.alpha = 0f;
+            }
+        }
+        
+        // LOGIKA COUNTDOWN MACET
+        if (isTrafficJam)
+        {
+            if (!wasTrafficJam)
+            {
+                currentCountdown = maxCountdown;
+                Debug.Log($"⚠️ MACET DETEKSI! Countdown {maxCountdown} detik dimulai");
+                // TAMBAHKAN WARNING FLOATING TEXT SAAT MACET MULAI
+                wasTrafficJam = true;
+            }
+            
+            currentCountdown -= Time.deltaTime;
+            
+            
+            if (currentCountdown <= 0)
+            {
+                ApplyPenalty();
+                currentCountdown = maxCountdown;
+            }
+        }
+        else
+        {
+            if (wasTrafficJam)
+            {
+                Debug.Log($"✅ MACET SELESAI! LANCAR LAGI");
+                ShowWarningText("✅ TRAFFIC LANCAR", Color.green);
+                wasTrafficJam = false;
+                currentCountdown = maxCountdown;
+                currentPenaltyCount = 0;
+                SaveProgressSimple();
+            }
+        }
+    }
+
+    bool CheckIfAnyCarsExist()
+    {
+        if (carQueue.Count > 0) return true;
+        if (queueDetector != null && queueDetector.queuedCars.Count > 0) return true;
+        return FindObjectsOfType<CarAI>().Length > 0;
+    }
+
+    void ShowWarningText(string message, Color color)
+    {
+        if (floatingTextPrefab == null)
+        {
+            Debug.LogWarning("FloatingTextPrefab is null!");
+            return;
+        }
+        
+        if (mainCamera == null)
+        {
+            Debug.LogWarning("MainCamera is null!");
+            return;
+        }
+        
+        if (canvas == null)
+        {
+            Debug.LogWarning("Canvas is null!");
+            return;
+        }
+        
+        Vector3 worldPos = transform.position + Vector3.up * 4f;
+        Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+        
+        GameObject ft = Instantiate(floatingTextPrefab, canvas.transform);
+        
+        RectTransform rt = ft.GetComponent<RectTransform>();
+        if (rt != null)
+            rt.position = screenPos;
+        
+        FloatingText ftScript = ft.GetComponent<FloatingText>();
+        if (ftScript != null)
+        {
+            ftScript.SetText(message);
+            ftScript.SetColor(color);
+        }
+        else
+        {
+            Debug.LogWarning("FloatingText component not found on prefab!");
+        }
+        
+        Destroy(ft, 1.5f);
+    }
+
+    void ApplyPenalty()
+    {
+        currentPenaltyCount++;
+        
+        Debug.Log($"⚠️ PENALTY KE-{currentPenaltyCount} dari {maxPenaltyCount}");
+        
+        // CEK APAKAH SUDAH MENCAPAI BATAS MAX PENALTY
+        if (currentPenaltyCount >= maxPenaltyCount)
+        {
+            Debug.Log($"💀 GAME OVER! Sudah kena penalty {currentPenaltyCount} kali (maksimal {maxPenaltyCount})");
+            // GABUNG JADI SATU: GAME OVER + Penalty
+            ShowWarningText($"GAME OVER!\nPenalty {currentPenaltyCount}/{maxPenaltyCount}", Color.red);
+            
+            if (GameManager.instance != null)
+                GameManager.instance.GameOver();
+            return;
+        }
+        
+        // CEK APAKAH UANG CUKUP
+        if (MoneyManager.instance != null && MoneyManager.instance.money >= penaltyMoney)
+        {
+            MoneyManager.instance.SpendMoney(penaltyMoney);
+            Debug.Log($"💸 DENDA! -{penaltyMoney} | Sisa uang: {MoneyManager.instance.money} | Penalty: {currentPenaltyCount}/{maxPenaltyCount}");
+            
+            // GABUNG JADI SATU TEKS: -1000 di atas, Penalty (1/3) di bawah
+            ShowWarningText($"-{penaltyMoney}\nPenalty {currentPenaltyCount}/{maxPenaltyCount}", Color.red);
+            
+            SaveProgressSimple();
+            
+            if (MoneyManager.instance.money <= 0)
+            {
+                Debug.Log($"💀 GAME OVER! Uang habis!");
+                ShowWarningText($"UANG HABIS!\nGAME OVER!", Color.red);
+                if (GameManager.instance != null)
+                    GameManager.instance.GameOver();
+            }
+        }
+        else
+        {
+            Debug.Log($"💀 GAME OVER! Uang tidak cukup bayar denda {penaltyMoney}");
+            ShowWarningText($"UANG TIDAK CUKUP!\nButuh {penaltyMoney}", Color.red);
+            if (GameManager.instance != null)
+                GameManager.instance.GameOver();
+        }
+    }
+
+    void UpdateUI()
+    {
+        if (isUnlocked)
+        {
+            unlockButton.SetActive(false);
+            levelText.text = "Gate Lv." + level;
+
+            if (level >= maxLevel)
+            {
+                upgradeButton.SetActive(false);
+                if (maxLevelText != null) maxLevelText.SetActive(true);
+            }
+            else
+            {
+                upgradeButton.SetActive(true);
+                if (maxLevelText != null) maxLevelText.SetActive(false);
+                int cost = GetUpgradeCost();
+                upgradeText.text = "Upgrade\n(" + cost + ")";
+                bool canUpgrade = MoneyManager.instance != null && MoneyManager.instance.money >= cost;
+                SetButtonState(upgradeButton.GetComponent<Button>(), canUpgrade);
+            }
+
+            if (payButton != null) payButton.SetActive(level == 1);
+        }
+        else
+        {
+            if (unlockButton != null) unlockButton.SetActive(true);
+            if (upgradeButton != null) upgradeButton.SetActive(false);
+            if (payButton != null) payButton.SetActive(false);
+            if (maxLevelText != null) maxLevelText.SetActive(false);
+            levelText.text = "Locked";
+            unlockText.text = "Buka Pintu\n(" + unlockCost + ")";
+            bool canUnlock = MoneyManager.instance != null && MoneyManager.instance.money >= unlockCost;
+            SetButtonState(unlockButton.GetComponent<Button>(), canUnlock);
+        }
+        UpdatePayButtonState();
+    }
+
+    void SetButtonState(Button btn, bool canAfford)
+    {
+        if (btn == null) return;
+        btn.interactable = canAfford;
+        CanvasGroup cg = btn.GetComponent<CanvasGroup>();
+        if (cg != null) cg.alpha = canAfford ? 1f : 0.5f;
+    }
+
+    int GetUpgradeCost() => Mathf.RoundToInt(baseUpgradeCost * Mathf.Pow(costMultiplier, level - 1));
+    bool IsAuto() => level >= 2;
+    float GetDelay() => level == 1 ? 1.5f : (level == 2 ? 1.0f : (level == 3 ? 0.5f : 0.1f));
+
+    public void UnlockGate()
+    {
+        if (isUnlocked) return;
+        
+        if (MoneyManager.instance != null && MoneyManager.instance.money >= unlockCost)
+        {
+            MoneyManager.instance.SpendMoney(unlockCost);
+            isUnlocked = true;
+            
+            // MAINTAIN SOUND
+            if (audioSource != null && unlockSound != null)
+                audioSource.PlayOneShot(unlockSound);
+            
+            // TAMPILKAN FLOATING TEXT (SUDAH OK)
+            ShowWarningText("GATE OPEN", Color.cyan);
+            
+            SaveProgressSimple();
+            spawner?.SetActive(true);
+            spawner?.StartSpawner();
+            UpdateUI();
+            Debug.Log($"🔓 GATE DIBUKA!");
+        }
+        else
+        {
+            ShowWarningText($"UANG TIDAK CUKUP!\nButuh {unlockCost}", Color.red);
+        }
+    }
+
+    public void UpgradeGate()
+    {
+        if (level >= maxLevel)
+        {
+            ShowWarningText("MAX LEVEL!", Color.yellow);
+            return;
+        }
+        
+        int cost = GetUpgradeCost();
+        
+        if (MoneyManager.instance != null && MoneyManager.instance.money >= cost)
+        {
+            MoneyManager.instance.SpendMoney(cost);
+            level++;
+            
+            if (audioSource != null && upgradeSound != null)
+                audioSource.PlayOneShot(upgradeSound);
+            
+            // TAMPILKAN FLOATING TEXT
+            ShowWarningText($"UPGRADE\nLEVEL {level}", Color.green);
+            
+            SaveProgressSimple();
+            UpdateUI();
+            Debug.Log($"⬆️ UPGRADE ke Level {level}");
+            
+            if (IsAuto() && carQueue.Count > 0) 
+                TryProcessNextCar();
+        }
+        else
+        {
+            ShowWarningText($"UANG TIDAK CUKUP!\nButuh {cost}", Color.red);
+        }
+    }
+
+    void TryProcessNextCar()
+    {
+        if (!isProcessing && carQueue.Count > 0)
+            StartCoroutine(ProcessCar());
+    }
+
+    public void PayAndRelease()
+    {
+        if (level == 1) TryProcessNextCar();
+    }
+
     void UpdateTrafficUIPosition()
     {
-        if (trafficText == null || mainCamera == null) return;
+        if (trafficText == null || mainCamera == null)
+            return;
 
         Vector3 worldPos = transform.position + Vector3.up * 4f;
+
         Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
 
         trafficText.transform.position = screenPos;
-    }
-
-    // FIX: Improved Save function with better queue saving
-    void SaveProgress()
-    {
-        if (string.IsNullOrEmpty(gateID))
-        {
-            Debug.LogWarning("GateID kosong!");
-            return;
-        }
-
-        PlayerPrefs.SetInt(gateID + "_level", level);
-        PlayerPrefs.SetInt(gateID + "_unlock", isUnlocked ? 1 : 0);
-        PlayerPrefs.SetInt(gateID + "_penaltyCount", currentPenaltyCount);
-        PlayerPrefs.SetInt(gateID + "_nextQueueNumber", nextQueueNumber);
-        
-        // FIX: Also save current money state if needed
-        if (MoneyManager.instance != null)
-        {
-            PlayerPrefs.SetInt("TotalMoney", MoneyManager.instance.money);
-        }
-        
-        // Save queue data with better format
-        string queueData = GetQueueData();
-        PlayerPrefs.SetString(gateID + "_queue", queueData);
-        
-        // Save car queue data separately
-        SaveCarQueueData();
-
-        PlayerPrefs.Save();
-
-        Debug.Log($"💾 SAVE {gateID} | Level: {level} | Unlock: {isUnlocked} | Penalty: {currentPenaltyCount} | Queue Length: {carQueue.Count}");
-    }
-
-    // FIX: New method to save car queue properly
-    void SaveCarQueueData()
-    {
-        List<string> carDataList = new List<string>();
-        CarAI[] cars = carQueue.ToArray();
-        
-        foreach (CarAI car in cars)
-        {
-            if (car != null)
-            {
-                string data = $"{car.carID}|{car.category}|{car.queueNumber}";
-                carDataList.Add(data);
-            }
-        }
-        
-        string allCarData = string.Join(";", carDataList);
-        PlayerPrefs.SetString(gateID + "_carQueue", allCarData);
-        Debug.Log($"Saved {carDataList.Count} cars in queue");
-    }
-
-    void LoadProgress()
-    {
-        if (string.IsNullOrEmpty(gateID))
-        {
-            Debug.LogWarning("GateID kosong!");
-            return;
-        }
-
-        level = PlayerPrefs.GetInt(gateID + "_level", level);
-        isUnlocked = PlayerPrefs.GetInt(gateID + "_unlock", isUnlocked ? 1 : 0) == 1;
-        currentPenaltyCount = PlayerPrefs.GetInt(gateID + "_penaltyCount", 0);
-        nextQueueNumber = PlayerPrefs.GetInt(gateID + "_nextQueueNumber", 1);
-        loadedQueueData = PlayerPrefs.GetString(gateID + "_queue", "");
-
-        Debug.Log($"📥 LOAD {gateID} | Level: {level} | Unlock: {isUnlocked} | Penalty: {currentPenaltyCount}");
-        Debug.Log($"🚗 LOAD QUEUE: {loadedQueueData}");
-    }
-
-    string GetQueueData()
-    {
-        if (queueDetector == null || queueDetector.queuedCars == null)
-            return "";
-
-        if (queueDetector.queuedCars.Count == 0)
-            return "";
-
-        List<string> data = new List<string>();
-
-        foreach (CarAI car in queueDetector.queuedCars)
-        {
-            if (car != null)
-            {
-                string carData = car.carID + "|" + car.category.ToString();
-                data.Add(carData);
-            }
-        }
-
-        return string.Join(",", data);
-    }
-
-    IEnumerator RestoreQueueTraffic()
-    {
-        isRestoringTraffic = true;
-
-        if (loadingPanel != null)
-        {
-            loadingPanel.SetActive(true);
-        }
-
-        if (string.IsNullOrEmpty(loadedQueueData))
-        {
-            Debug.Log("Tidak ada queue untuk direstore");
-            isRestoringTraffic = false;
-            if (loadingPanel != null) loadingPanel.SetActive(false);
-            yield break;
-        }
-
-        if (spawner != null)
-            spawner.SetActive(false);
-
-        Debug.Log("🚦 MULAI RESTORE TRAFFIC");
-
-        string[] carsData = loadedQueueData.Split(',');
-
-        foreach (string data in carsData)
-        {
-            if (string.IsNullOrEmpty(data))
-                continue;
-
-            string[] splitData = data.Split('|');
-
-            if (splitData.Length >= 1)
-            {
-                string carID = splitData[0];
-                Debug.Log("🚗 RESTORE MOBIL: " + carID);
-
-                if (spawner != null)
-                    spawner.SpawnSpecificCar(carID);
-
-                yield return new WaitForSeconds(0.75f);
-            }
-        }
-
-        if (spawner != null)
-            spawner.SetActive(true);
-
-        Debug.Log("✅ RESTORE TRAFFIC SELESAI");
-        yield return new WaitForSeconds(1f);
-
-        if (isUnlocked && spawner != null)
-        {
-            spawner.StartSpawner();
-        }
-        
-        isRestoringTraffic = false;
-
-        if (loadingPanel != null)
-        {
-            loadingPanel.SetActive(false);
-        }
     }
 }
