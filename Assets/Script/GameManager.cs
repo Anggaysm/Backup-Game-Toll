@@ -2,7 +2,6 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -40,25 +39,40 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        Debug.Log("🔄 FULL GAME RESET");
+        Debug.Log("FULL GAME RESET");
 
         Time.timeScale = 1f;
-
-        // HAPUS SEMUA SAVE
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
 
         if (MoneyManager.instance != null)
-        {
             MoneyManager.instance.ResetMoney();
-        }
 
-        // OPTIONAL: hide loading/game over
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
 
-        // RELOAD SCENE
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+    
+    public void GoToHome()
+    {
+        Debug.Log("Going to Home Screen - RESET ALL DATA");
+        
+        // RESET SEMUA DATA KE 0
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+        
+        if (MoneyManager.instance != null)
+        {
+            MoneyManager.instance.ResetMoney();
+        }
+        
+        Time.timeScale = 1f;
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+
+        SceneManager.LoadScene("HomeScreen");
     }
 
     IEnumerator FadeInGameOver()
