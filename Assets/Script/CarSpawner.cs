@@ -24,6 +24,13 @@ public class CarSpawner : MonoBehaviour
     private float currentSpawnInterval;
     private Coroutine spawnCoroutine;
     private bool isActive = false;
+
+    [Header("Restore Safety")]
+    public float minSafeDistance = 8f;  // Jarak minimal dari spawn point ke mobil terakhir
+    private GameObject lastSpawnedCar = null;  // Track mobil terakhir yang di-spawn
+
+    private float normalCarSpeedMin = 8f;
+    private float normalCarSpeedMax = 12f;
     
     // Track spawned cars for restore purposes
     private List<GameObject> spawnedCars = new List<GameObject>();
@@ -452,5 +459,85 @@ public class CarSpawner : MonoBehaviour
             StopCoroutine(spawnCoroutine);
             spawnCoroutine = null;
         }
+    }
+
+    public bool SpawnRandomCarFast(float yOffset = 0.5f, float tempSpeedMultiplier = 2.5f)
+    {
+        // CEK JARAK AMAN DULU
+        if (!IsSafeToSpawnDuringRestore())
+        {
+            if (showDebugLogs)
+                Debug.Log($"⏳ Menunggu jarak aman... Mobil terakhir masih terlalu dekat");
+            return false;
+        }
+        
+        if (carPrefabs == null || carPrefabs.Length == 0)
+        {
+            Debug.LogWarning("No car prefabs assigned for random spawn!");
+            return false;
+        }
+        
+        if (spawnPoint == null)
+        {
+            Debug.LogError("SpawnPoint is null!");
+            return false;
+        }
+        
+        int index = Random.Range(0, carPrefabs.Length);
+        
+        // Offset Y biar mobil tidak numpuk
+        Vector3 spawnPos = spawnPoint.position;
+        spawnPos.y += yOffset;
+        
+        GameObject car = Instantiate(carPrefabs[index], spawnPos, Quaternion.identity);
+        
+        CarAI ai = car.GetComponent<CarAI>();
+        if (ai != null)
+        {
+            ai.waypoints = waypoints;
+            ai.IsInQueue = true;
+            
+            // 🔥 SET SPEED SEMENTARA SEMUA MOBIL JADI CEPAT (2.5x)
+            float normalSpeed = Random.Range(normalCarSpeedMin, normalCarSpeedMax);
+            float restoreSpeed = normalSpeed * tempSpeedMultiplier;
+            ai.SetTempRestoreSpeed(restoreSpeed, 5f); // Durasi 5 detik (lebih panjang)
+            
+            if (string.IsNullOrEmpty(ai.carID))
+            {
+                ai.carID = gameObject.name + "_" + System.Guid.NewGuid().ToString().Substring(0, 8);
+            }
+            
+            spawnedCars.Add(car);
+            lastSpawnedCar = car;
+            
+            if (showDebugLogs)
+                Debug.Log($"🚗 FAST RESTORE SPAWN #{spawnedCars.Count}: {ai.carID} with speed {restoreSpeed:F1}");
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    bool IsSafeToSpawnDuringRestore()
+    {
+        if (lastSpawnedCar == null) return true;  // Belum ada mobil, aman
+        
+        if (lastSpawnedCar == null) return true;
+        
+        float distance = Vector3.Distance(spawnPoint.position, lastSpawnedCar.transform.position);
+        bool isSafe = distance >= minSafeDistance;
+        
+        if (showDebugLogs && Time.frameCount % 30 == 0)
+        {
+            Debug.Log($"🔍 Restore safety check: distance={distance:F1}, required={minSafeDistance}, safe={isSafe}");
+        }
+        
+        return isSafe;
+    }
+
+    public void ClearLastSpawnedCar()
+    {
+        lastSpawnedCar = null;
     }
 }

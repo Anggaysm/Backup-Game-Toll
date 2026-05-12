@@ -21,10 +21,10 @@ EditorBuildSettings:
     path: Assets/Scenes/LalinTol_Cililitan.unity
     guid: 549af84711fffc441a0225dcf1783303
   - enabled: 1
-    path: Assets/Scenes/GerbangTol_Ciawi.unity
+    path: Assets/Scenes/GerbangTol_Bogor.unity
     guid: a4366b62e39e55b4795423dab9d6151d
   - enabled: 1
-    path: Assets/Scenes/LalinTol_Ciawi.unity
+    path: Assets/Scenes/LalinTol_Bogor.unity
     guid: 40fd87ffee17e8e48a5a390671879cee
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -59,9 +59,9 @@ public class SceneController : MonoBehaviour
         SceneManager.LoadScene("ModeSelect");
     }
 
-    public void PilihCiawi()
+    public void PilihBogor()
     {
-        GameData.selectedZone = "Ciawi";
+        GameData.selectedZone = "Bogor";
         SceneManager.LoadScene("ModeSelect");
     }
 
@@ -71,9 +71,9 @@ public class SceneController : MonoBehaviour
         {
             SceneManager.LoadScene("GerbangTol_Cililitan");
         }
-        else if (GameData.selectedZone == "Ciawi")
+        else if (GameData.selectedZone == "Bogor")
         {
-            SceneManager.LoadScene("GerbangTol_Ciawi");
+            SceneManager.LoadScene("GerbangTol_Bogor");
         }
     }
 
@@ -83,9 +83,9 @@ public class SceneController : MonoBehaviour
         {
             SceneManager.LoadScene("LalinTol_Cililitan");
         }
-        else if (GameData.selectedZone == "Ciawi")
+        else if (GameData.selectedZone == "Bogor")
         {
-            SceneManager.LoadScene("LalinTol_Ciawi");
+            SceneManager.LoadScene("LalinTol_Bogor");
         }
     }
 

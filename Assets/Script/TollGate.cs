@@ -71,10 +71,13 @@ public class TollGate : MonoBehaviour
     [Header("Layer Settings")]
     public LayerMask carLayer;
 
-    
-
     private float autoSaveTimer = 0f;
     public float autoSaveInterval = 5f;
+
+    [Header("Restore Settings")]
+    public float restoreSpawnInterval = 0.5f;
+    public float restoreYOffset = 0.8f;
+    public float restoreSpeedMultiplier = 2.5f;
 
     void Start()
     {
@@ -91,6 +94,10 @@ public class TollGate : MonoBehaviour
             LoadingManager.instance.ShowLoading("Loading Traffic...");
 
             StartCoroutine(StartRestoreDelay());
+        }else
+        {
+            // 🔥 TIDAK ADA QUEUE, LANGSUNG START RUSH HOUR
+            StartRushHourSystemIfReady();
         }
         
         UpdateUI();
@@ -176,57 +183,75 @@ public class TollGate : MonoBehaviour
         
         return 0;
     }
-
-    // ==================== RESTORE SIMPLE ====================
     
     IEnumerator RestoreQueueSimple()
     {
         isRestoringTraffic = true;
+        
         if (savedQueueCount <= 0)
         {
-            Debug.Log($"✅ Tidak ada queue untuk direstore (count: {savedQueueCount})");
+            Debug.Log($"✅ Tidak ada queue untuk direstore");
+            StartRushHourSystemIfReady();
             yield break;
         }
         
-        // TAMPILKAN LOADING
         if (LoadingManager.instance != null)
         {
             yield return null;
         }
-        else
-        {
-            Debug.LogError("❌ LoadingManager.instance tidak ditemukan!");
-        }
+        
+        Debug.Log($"🚦 MULAI RESTORE: {savedQueueCount} mobil (dengan pengecekan jarak aman)");
 
-        Debug.Log($"🚦 MULAI RESTORE SIMPLE: {savedQueueCount} mobil akan dispawan");
+        IncreaseAllExistingCarsSpeed(restoreSpeedMultiplier);
 
         if (spawner != null)
             spawner.SetActive(false);
-
-        for (int i = 0; i < savedQueueCount; i++)
+        
+        int successfullySpawned = 0;
+        int retryCount = 0;
+        int maxRetries = savedQueueCount * 3; // Batas maksimal retry
+        
+        while (successfullySpawned < savedQueueCount && retryCount < maxRetries)
         {
-            // UPDATE PROGRESS
-            if (LoadingManager.instance != null)
-            {
-                float progress = (float)(i + 1) / savedQueueCount;
-                int percent = Mathf.RoundToInt(progress * 100f);
-
-                LoadingManager.instance.UpdateMessage(percent + "%");
-            }
-            
-            Debug.Log($"🚗 RESTORE MOBIL KE-{i+1} dari {savedQueueCount}");
-            
             if (spawner != null)
             {
-                spawner.SpawnRandomCar();
+                bool spawnSuccess = spawner.SpawnRandomCarFast(restoreYOffset, restoreSpeedMultiplier);
+                
+                if (spawnSuccess)
+                {
+                    successfullySpawned++;
+                    retryCount = 0; // Reset retry counter
+                    
+                    // UPDATE PROGRESS UI
+                    if (LoadingManager.instance != null)
+                    {
+                        float progress = (float)successfullySpawned / savedQueueCount;
+                        int percent = Mathf.RoundToInt(progress * 100f);
+                        LoadingManager.instance.UpdateMessage($"Restoring: {percent}%");
+                    }
+                    
+                    Debug.Log($"🚗 RESTORE MOBIL KE-{successfullySpawned} dari {savedQueueCount}");
+                }
+                else
+                {
+                    retryCount++;
+                    if (retryCount % 5 == 0)
+                    {
+                        Debug.Log($"⏳ Menunggu jarak aman... (retry {retryCount})");
+                    }
+                }
             }
             
-            yield return new WaitForSeconds(0.95f);
+            // Tunggu sebentar sebelum cek lagi (lebih pendek dari interval spawn normal)
+            yield return new WaitForSeconds(0.2f);
         }
-
+        
         if (spawner != null)
+        {
             spawner.SetActive(true);
-
+            spawner.ClearLastSpawnedCar(); // Clear tracking setelah selesai
+        }
+        
         if (isUnlocked && spawner != null)
         {
             spawner.StartSpawner();
@@ -235,13 +260,29 @@ public class TollGate : MonoBehaviour
         PlayerPrefs.SetInt(gateID + "_queueCount", 0);
         PlayerPrefs.Save();
         
-        Debug.Log($"✅ RESTORE SIMPLE SELESAI: {savedQueueCount} mobil telah dispawan");
+        Debug.Log($"✅ RESTORE SELESAI! {successfullySpawned}/{savedQueueCount} mobil dispawan");
         
         isRestoringTraffic = false;
-        // SEMBUNYIKAN LOADING
+        
         if (LoadingManager.instance != null)
         {
             LoadingManager.instance.HideLoading();
+        }
+        
+        StartRushHourSystemIfReady();
+    }
+
+    // Method baru di TollGate.cs
+    void StartRushHourSystemIfReady()
+    {
+        if (RushHourManager.Instance != null)
+        {
+            Debug.Log("🚦 Starting Rush Hour System after loading complete!");
+            RushHourManager.Instance.StartRushHourSystem();
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ RushHourManager.Instance not found!");
         }
     }
 
@@ -448,7 +489,7 @@ public class TollGate : MonoBehaviour
     {
         if (carQueue.Count > 0) return true;
         if (queueDetector != null && queueDetector.queuedCars.Count > 0) return true;
-        return FindObjectsOfType<CarAI>().Length > 0;
+        return FindObjectsByType<CarAI>(FindObjectsSortMode.None).Length > 0;
     }
 
     void ShowWarningText(string message, Color color)
@@ -673,5 +714,25 @@ public class TollGate : MonoBehaviour
         Vector3 screenPos = mainCamera.WorldToScreenPoint(worldPos);
 
         trafficText.transform.position = screenPos;
+    }
+
+    void IncreaseAllExistingCarsSpeed(float multiplier)
+    {
+        CarAI[] allCars = FindObjectsByType<CarAI>(FindObjectsSortMode.None);
+        int count = 0;
+        
+        foreach (CarAI car in allCars)
+        {
+            if (car != null && !car.IsInQueue) // Mobil yang belum di queue
+            {
+                float currentSpeed = car.GetCurrentSpeed();
+                float newSpeed = currentSpeed * multiplier;
+                newSpeed = Mathf.Min(newSpeed, 35f); // Batas maksimal speed 35
+                car.SetTempRestoreSpeed(newSpeed, 4f); // Cepat selama 4 detik
+                count++;
+            }
+        }
+        
+        Debug.Log($"🏎️ Increased speed of {count} existing cars (multiplier: {multiplier}x)");
     }
 }

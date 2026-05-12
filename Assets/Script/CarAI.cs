@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections; 
 
 public class CarAI : MonoBehaviour
 {
@@ -204,6 +205,55 @@ public class CarAI : MonoBehaviour
         if (!isDestroyed)
         {
             isDestroyed = true;
+        }
+    }
+
+
+    public void SetSpeed(float newSpeed)
+    {
+        if (!isPaying) // Jangan ubah speed kalow sedang bayar
+        {
+            speed = newSpeed;
+            currentSpeed = speed;
+            baseSpeed = speed;
+            
+            if (showDebugLogs)
+                Debug.Log($"🏎️ {carID} speed changed to {speed:F1}");
+        }
+    }
+
+    // Optional: Get current speed
+    public float GetCurrentSpeed()
+    {
+        return speed;
+    }
+
+    public void SetTempRestoreSpeed(float tempSpeed, float duration = 5f)
+    {
+        float originalSpeed = speed;
+        
+        speed = tempSpeed;
+        currentSpeed = tempSpeed;
+        baseSpeed = tempSpeed;
+        
+        if (showDebugLogs)
+            Debug.Log($"🏎️ {carID} RESTORE SPEED: {tempSpeed:F1} (will return to normal in {duration}s)");
+        
+        StartCoroutine(ResetToNormalSpeedAfterDelay(duration, originalSpeed));
+    }
+
+    IEnumerator ResetToNormalSpeedAfterDelay(float delay, float originalSpeed)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        if (this != null)
+        {
+            speed = originalSpeed;
+            currentSpeed = originalSpeed;
+            baseSpeed = originalSpeed;
+            
+            if (showDebugLogs)
+                Debug.Log($"🏎️ {carID} speed back to normal: {originalSpeed:F1}");
         }
     }
     
