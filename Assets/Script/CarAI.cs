@@ -3,6 +3,20 @@ using System.Collections;
 
 public class CarAI : MonoBehaviour
 {
+    public enum CarMode
+    {
+        TollGate,   // Mode untuk scene Toll Gate
+        Highway     // Mode untuk scene Highway
+    }
+
+    [Header("Car Mode")]
+    public CarMode currentMode = CarMode.TollGate;
+
+    [Header("Highway Mode Settings")]
+    public bool isBroken = false;
+    public float breakdownChance = 0.02f;
+    private float breakdownCheckTimer = 0f;
+
     public enum CarCategory
     {
         Category1,
@@ -59,12 +73,31 @@ public class CarAI : MonoBehaviour
     {
         if (isDestroyed) return;
         
-        if (isPaying) 
+        // ========== HIGHWAY MODE LOGIC ==========
+        if (currentMode == CarMode.Highway)
+        {
+            // Cek mogok (hanya jika tidak sedang mogok dan tidak sedang bayar)
+            if (!isBroken && !isPaying)
+            {
+                CheckForBreakdown();
+            }
+            
+            // Jika sedang mogok, berhenti total
+            if (isBroken)
+            {
+                currentSpeed = 0f;
+                return; // Tidak bisa gerak
+            }
+        }
+        
+        // ========== TOLL GATE MODE LOGIC ==========
+        if (isPaying && currentMode == CarMode.TollGate)
         {
             currentSpeed = 0f;
             return;
         }
-
+        
+        // ========== MOVEMENT LOGIC (SAMA UNTUK KEDUA MODE) ==========
         if (waypoints == null || waypoints.Length == 0) return;
         if (currentWaypoint >= waypoints.Length) return;
 
@@ -256,5 +289,68 @@ public class CarAI : MonoBehaviour
                 Debug.Log($"🏎️ {carID} speed back to normal: {originalSpeed:F1}");
         }
     }
-    
+
+    // ========== HIGHWAY MODE METHODS ==========
+
+    void CheckForBreakdown()
+    {
+        if (currentMode != CarMode.Highway) return;
+        
+        breakdownCheckTimer += Time.deltaTime;
+        if (breakdownCheckTimer >= 1f)
+        {
+            breakdownCheckTimer = 0f;
+            if (Random.value < breakdownChance)
+            {
+                BreakDown();
+            }
+        }
+    }
+
+    void BreakDown()
+    {
+        if (currentMode != CarMode.Highway) return;
+        if (isBroken) return;
+
+        isBroken = true;
+        currentSpeed = 0f;
+        gameObject.AddComponent<BrokenCar>();
+
+        Debug.Log($"💥 {carID} mogok!");
+    }
+
+    // public void Rescue()
+    // {
+    //     if (currentMode != CarMode.Highway) return;
+    //     if (!isBroken) return;
+        
+    //     isBroken = false;
+    //     penaltyCount = 0;
+    //     currentSpeed = speed;
+        
+    //     // Hapus komponen BrokenCar
+    //     BrokenCar bc = GetComponent<BrokenCar>();
+    //     if (bc != null) Destroy(bc);
+        
+    //     if (showDebugLogs)
+    //         Debug.Log($"✅ {carID} di-rescue!");
+    // }
+
+    // public void ApplyPenalty()
+    // {
+    //     if (currentMode != CarMode.Highway) return;
+        
+    //     penaltyCount++;
+        
+    //     if (showDebugLogs)
+    //         Debug.Log($"⚠️ {carID} penalty {penaltyCount}/3");
+        
+    //     if (penaltyCount >= 3)
+    //     {
+    //         Debug.Log($"💀 GAME OVER! {carID} kena 3x penalty!");
+    //         if (GameManager.instance != null)
+    //             GameManager.instance.GameOver();
+    //     }
+    // }
+
 }
