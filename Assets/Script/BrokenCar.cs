@@ -18,7 +18,12 @@ public class BrokenCar : MonoBehaviour
     public GameObject rescueButtonPrefab;
 
     private GameObject rescueButtonObject;
+    private TextMeshProUGUI rescueButtonText;
+    private UnityEngine.UI.Button rescueButton;
+    private UnityEngine.UI.Image rescueButtonImage;
     private bool isButtonAnimating = false;
+
+    private bool isBeingRescued = false;
 
     void Start()
     {
@@ -37,7 +42,7 @@ public class BrokenCar : MonoBehaviour
         {
             Vector3 startPos =
                 Camera.main.WorldToScreenPoint(
-                    transform.position + Vector3.up * 5f
+                    transform.position + Vector3.up * 7f
                 );
 
             rescueButtonObject.transform.position = startPos;
@@ -54,13 +59,16 @@ public class BrokenCar : MonoBehaviour
     {
         if (isResolved) return;
 
-        countdown -= Time.deltaTime;
+        if (!isBeingRescued)
+        {
+            countdown -= Time.deltaTime;
+        }
         UpdateCountdownUI();
         if (rescueButtonObject != null)
         {
             Vector3 desiredPos =
                 Camera.main.WorldToScreenPoint(
-                    transform.position + Vector3.up * 3f
+                    transform.position + Vector3.up * 7f
                 );
 
             if (isButtonAnimating)
@@ -98,6 +106,11 @@ public class BrokenCar : MonoBehaviour
     void AutoRecover()
     {
         isResolved = true;
+
+        if (FailureManager.Instance != null)
+        {
+            FailureManager.Instance.AddStrike();
+        }
 
         if (countdownTextObject != null)
         {
@@ -143,7 +156,7 @@ public class BrokenCar : MonoBehaviour
 
         countdownText = countdownTextObject.AddComponent<TextMeshProUGUI>();
 
-        countdownText.fontSize = 36;
+        countdownText.fontSize = 28;
         countdownText.alignment = TextAlignmentOptions.Center;
         countdownText.color = Color.red;
 
@@ -154,7 +167,7 @@ public class BrokenCar : MonoBehaviour
     {
         if (countdownTextObject == null) return;
 
-        Vector3 worldPos = transform.position + Vector3.up * 2f;
+        Vector3 worldPos = transform.position + Vector3.up * 1.8f;
 
         Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
 
@@ -178,19 +191,79 @@ public class BrokenCar : MonoBehaviour
             canvasObj.transform
         );
 
-        UnityEngine.UI.Button btn =
+        rescueButton =
             rescueButtonObject.GetComponent<UnityEngine.UI.Button>();
 
-        btn.onClick.AddListener(RescueCar);
+        rescueButtonImage =
+            rescueButtonObject.GetComponent<UnityEngine.UI.Image>();
+
+        rescueButtonText =
+            rescueButtonObject.GetComponentInChildren<TextMeshProUGUI>();
+
+        rescueButton.onClick.AddListener(RescueCar);
     }
 
     void RescueCar()
     {
         if (isResolved) return;
+        if (isBeingRescued) return;
+
+        if (RescueManager.Instance == null)
+        {
+            Debug.LogWarning("RescueManager tidak ditemukan!");
+            return;
+        }
+
+        if (!RescueManager.Instance.CanRescue())
+        {
+            Debug.Log($"❌ Semua rescue sedang sibuk!");
+
+            if (countdownText != null)
+            {
+                countdownText.color = Color.yellow;
+            }
+            return;
+        }
+
+        isBeingRescued = true;
+        if (countdownTextObject != null)
+        {
+            countdownTextObject.SetActive(false);
+        }
+
+        Debug.Log($"🚑 Rescue process started for {carAI.carID}");
+        if (rescueButtonText != null)
+        {
+            rescueButtonText.text = "RESCUING...";
+        }
+
+        if (rescueButton != null)
+        {
+            rescueButton.interactable = false;
+        }
+
+        if (rescueButtonImage != null)
+        {
+            Color color = rescueButtonImage.color;
+            color.a = 0.5f;
+
+            rescueButtonImage.color = color;
+        }
+
+        RescueManager.Instance.StartRescue(this);
+    }
+
+    public void FinishRescue()
+    {
+        if (isResolved) return;
 
         isResolved = true;
+        if (FailureManager.Instance != null)
+        {
+            FailureManager.Instance.ResetStrike();
+        }
 
-        Debug.Log($"🚑 {carAI.carID} rescued!");
+        Debug.Log($"✅ {carAI.carID} rescued successfully!");
 
         carAI.isBroken = false;
 

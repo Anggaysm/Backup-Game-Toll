@@ -54,7 +54,7 @@ public class CarAI : MonoBehaviour
 
     void Start()
     {
-        speed = Random.Range(8f, 12f);
+        speed = Random.Range(10f, 12f);
         currentSpeed = speed;
         baseSpeed = speed;
         
@@ -172,14 +172,13 @@ public class CarAI : MonoBehaviour
                 {
                     IsInQueue = false;
                 }
-                StartCoroutine(DestroyWithDelay());
+                DestroyCar();
             }
         }
     }
 
-    System.Collections.IEnumerator DestroyWithDelay()
+    void DestroyCar()
     {
-        yield return new WaitForSeconds(0.5f);
         if (!isDestroyed)
         {
             isDestroyed = true;
