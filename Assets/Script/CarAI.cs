@@ -17,6 +17,7 @@ public class CarAI : MonoBehaviour
     public float breakdownChance = 0.02f;
     private float breakdownCheckTimer = 0f;
 
+
     public enum CarCategory
     {
         Category1,
@@ -51,6 +52,12 @@ public class CarAI : MonoBehaviour
     private bool isPaying = false;
     private float currentSpeed;
     private bool isDestroyed = false;
+
+    [Header("Lane Reference")]
+    public LaneController currentLane;
+
+    [Header("Reward")]
+    public int rewardMoney = 100;
 
     void Start()
     {
@@ -144,10 +151,17 @@ public class CarAI : MonoBehaviour
             currentSpeed = Mathf.Min(currentSpeed + Time.deltaTime * 10f, speed);
         }
 
+        float finalSpeed = currentSpeed;
+        if (currentLane != null)
+        {
+            finalSpeed *=
+                currentLane.currentSpeedMultiplier;
+        }
+
         Vector3 newPosition = Vector3.MoveTowards(
             transform.position,
             target.position,
-            currentSpeed * Time.deltaTime
+            finalSpeed * Time.deltaTime
         );
 
         if (!isBlocked || distanceToObstacle > stoppingDistance + 0.5f)
@@ -172,6 +186,7 @@ public class CarAI : MonoBehaviour
                 {
                     IsInQueue = false;
                 }
+                GiveReward();
                 DestroyCar();
             }
         }
@@ -299,7 +314,13 @@ public class CarAI : MonoBehaviour
         if (breakdownCheckTimer >= 1f)
         {
             breakdownCheckTimer = 0f;
-            if (Random.value < breakdownChance)
+            float finalBreakdownChance = breakdownChance;
+            if (currentLane != null)
+            {
+                finalBreakdownChance *=
+                    currentLane.breakdownMultiplier;
+            }
+            if (Random.value < finalBreakdownChance)
             {
                 BreakDown();
             }
@@ -318,38 +339,50 @@ public class CarAI : MonoBehaviour
         Debug.Log($"💥 {carID} mogok!");
     }
 
-    // public void Rescue()
-    // {
-    //     if (currentMode != CarMode.Highway) return;
-    //     if (!isBroken) return;
-        
-    //     isBroken = false;
-    //     penaltyCount = 0;
-    //     currentSpeed = speed;
-        
-    //     // Hapus komponen BrokenCar
-    //     BrokenCar bc = GetComponent<BrokenCar>();
-    //     if (bc != null) Destroy(bc);
-        
-    //     if (showDebugLogs)
-    //         Debug.Log($"✅ {carID} di-rescue!");
-    // }
+    void GiveReward()
+    {
+        if (MoneyManager.instance != null)
+        {
+            MoneyManager.instance.AddMoney(rewardMoney);
 
-    // public void ApplyPenalty()
-    // {
-    //     if (currentMode != CarMode.Highway) return;
-        
-    //     penaltyCount++;
-        
-    //     if (showDebugLogs)
-    //         Debug.Log($"⚠️ {carID} penalty {penaltyCount}/3");
-        
-    //     if (penaltyCount >= 3)
-    //     {
-    //         Debug.Log($"💀 GAME OVER! {carID} kena 3x penalty!");
-    //         if (GameManager.instance != null)
-    //             GameManager.instance.GameOver();
-    //     }
-    // }
+            Debug.Log($"💰 +{rewardMoney} from {carID}");
+            ShowFloatingReward();
+        }
+    }
+    void ShowFloatingReward()
+    {
+        if (HighwayUIReference.Instance == null) return;
 
+        GameObject prefab =
+            HighwayUIReference.Instance.floatingTextPrefab;
+
+        if (prefab == null) return;
+
+        GameObject canvasObj =
+            GameObject.Find("Canvas");
+
+        if (canvasObj == null) return;
+
+        GameObject floatingObj =
+            Instantiate(
+                prefab,
+                canvasObj.transform
+            );
+
+        Vector3 screenPos =
+            Camera.main.WorldToScreenPoint(
+                transform.position + Vector3.up * 2f
+            );
+
+        floatingObj.transform.position = screenPos;
+
+        FloatingText floatingText =
+            floatingObj.GetComponent<FloatingText>();
+
+        if (floatingText != null)
+        {
+            floatingText.SetText($"+${rewardMoney}");
+            floatingText.SetColor(Color.green);
+        }
+    }
 }

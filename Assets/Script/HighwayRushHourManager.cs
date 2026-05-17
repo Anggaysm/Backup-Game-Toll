@@ -48,34 +48,21 @@ public class HighwayRushHourManager : MonoBehaviour
     }
         
     void Start()
-    {   
+    {
         currentTimer = normalModeDuration;
         isRushHour = false;
-        
-        // Cari semua spawner dulu
+
         if (allSpawners == null || allSpawners.Length == 0)
         {
-            allSpawners = FindObjectsByType<HighwayCarSpawner>(FindObjectsSortMode.None);
+            allSpawners =
+                FindObjectsByType<HighwayCarSpawner>(
+                    FindObjectsSortMode.None
+                );
         }
-        
-        // Set ke normal dulu (jangan rush hour)
-        SetToNormalMode();
-        
-        // Matikan update dulu
-        enabled = false; // 🔥 IMPORTANT: Rush hour belum aktif
-        
-        Debug.Log("⏸️ RushHourManager disabled, waiting for loading to complete...");
-    }
 
-    public void StartRushHourSystem()
-    {
-        enabled = true;  // Aktifkan update
-        currentTimer = normalModeDuration;
-        isRushHour = false;
-        
         SetToNormalMode();
-        
-        Debug.Log("✅ RushHourSystem STARTED! Countdown begins...");
+
+        Debug.Log("✅ Highway Rush Hour Started!");
     }
     
     void SetToNormalMode()

@@ -14,11 +14,22 @@ public class FailureManager : MonoBehaviour
             Instance = this;
         else
             Destroy(gameObject);
+
+        if (HighwayDataManager.Instance != null)
+        {
+            currentStrike =
+                HighwayDataManager.Instance.savedStrike;
+        }
     }
 
     public void AddStrike()
     {
         currentStrike++;
+        if (HighwayDataManager.Instance != null)
+        {
+            HighwayDataManager.Instance.savedStrike =
+                currentStrike;
+        }
 
         Debug.Log($"⚠️ STRIKE {currentStrike}/{maxStrike}");
 
@@ -36,6 +47,10 @@ public class FailureManager : MonoBehaviour
         }
 
         currentStrike = 0;
+        if (HighwayDataManager.Instance != null)
+        {
+            HighwayDataManager.Instance.savedStrike = 0;
+        }
     }
 
     void GameOver()

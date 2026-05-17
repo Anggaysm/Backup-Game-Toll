@@ -20,7 +20,7 @@ public class RescueManager : MonoBehaviour
     public int baseCost = 5000;
     public float costMultiplier = 2f;
 
-private int purchaseCount = 0;
+    private int purchaseCount = 0;
 
     [SerializeField]
     private int availableRescue = 1;
@@ -31,6 +31,20 @@ private int purchaseCount = 0;
             Instance = this;
         else
             Destroy(gameObject);
+
+        if (HighwayDataManager.Instance != null)
+        {
+            availableRescue =
+                HighwayDataManager.Instance.savedRescue;
+
+            totalRescue = availableRescue;
+        }
+
+        if (HighwayDataManager.Instance != null)
+        {
+            purchaseCount =
+                HighwayDataManager.Instance.savedPurchaseCount;
+        }
     }
 
     public int GetAvailableRescue()
@@ -100,6 +114,17 @@ private int purchaseCount = 0;
         totalRescue++;
 
         purchaseCount++;
+        if (HighwayDataManager.Instance != null)
+        {
+            HighwayDataManager.Instance.savedPurchaseCount =
+                purchaseCount;
+        }
+
+        if (HighwayDataManager.Instance != null)
+        {
+            HighwayDataManager.Instance.savedRescue =
+                availableRescue;
+        }
 
         Debug.Log($"✅ Rescue purchased! Total: {totalRescue}");
 

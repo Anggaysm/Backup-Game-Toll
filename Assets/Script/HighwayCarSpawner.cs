@@ -26,6 +26,9 @@ public class HighwayCarSpawner : MonoBehaviour
     private float currentSpawnInterval;
     private Coroutine spawnCoroutine;
     private List<GameObject> spawnedCars = new List<GameObject>();
+
+    [Header("Lane")]
+    public LaneController laneController;
     
     void Start()
     {
@@ -105,8 +108,8 @@ public class HighwayCarSpawner : MonoBehaviour
         
         int index = Random.Range(0, carPrefabs.Length);
         GameObject car = Instantiate(carPrefabs[index], spawnPoint.position, Quaternion.identity);
-        
         CarAI ai = car.GetComponent<CarAI>();
+        ai.currentLane = laneController;
         if (ai != null)
         {
             ai.waypoints = waypoints;
