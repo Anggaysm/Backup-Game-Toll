@@ -209,6 +209,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ba993a8d6e1bde4398836cbd5eb0d5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentMode: 0
+  isBroken: 0
+  breakdownChance: 0.01
   carID: SportsCar2
   category: 2
   waypoints: []
@@ -216,6 +219,10 @@ MonoBehaviour:
   detectionDistance: 4
   stoppingDistance: 1.5
   raycastOffset: 1.5
+  IsInQueue: 0
+  showDebugLogs: 1
+  currentLane: {fileID: 0}
+  rewardMoney: 100
 --- !u!65 &8179935739259520790
 BoxCollider:
   m_ObjectHideFlags: 0

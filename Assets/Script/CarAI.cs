@@ -14,7 +14,7 @@ public class CarAI : MonoBehaviour
 
     [Header("Highway Mode Settings")]
     public bool isBroken = false;
-    public float breakdownChance = 0.02f;
+    public float breakdownChance = 0.01f;
     private float breakdownCheckTimer = 0f;
 
 
@@ -343,13 +343,32 @@ public class CarAI : MonoBehaviour
     {
         if (MoneyManager.instance != null)
         {
-            MoneyManager.instance.AddMoney(rewardMoney);
+            int finalReward = rewardMoney;
+            if (HighwayEfficiencyManager.Instance != null)
+            {
+                float efficiency =
+                    HighwayEfficiencyManager.Instance.currentEfficiency;
 
-            Debug.Log($"💰 +{rewardMoney} from {carID}");
-            ShowFloatingReward();
+                // HIGH EFFICIENCY
+                if (efficiency >= 90)
+                {
+                    finalReward *= 2;
+                }
+
+                // LOW EFFICIENCY
+                else if (efficiency < 50)
+                {
+                    finalReward =
+                        Mathf.RoundToInt(finalReward * 0.5f);
+                }
+            }
+            MoneyManager.instance.AddMoney(finalReward);
+
+            Debug.Log($"💰 +{finalReward} from {carID}");
+            ShowFloatingReward(finalReward);
         }
     }
-    void ShowFloatingReward()
+    void ShowFloatingReward(int amount)
     {
         if (HighwayUIReference.Instance == null) return;
 
@@ -381,7 +400,7 @@ public class CarAI : MonoBehaviour
 
         if (floatingText != null)
         {
-            floatingText.SetText($"+${rewardMoney}");
+            floatingText.SetText($"+${amount}");
             floatingText.SetColor(Color.green);
         }
     }

@@ -186,14 +186,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ba993a8d6e1bde4398836cbd5eb0d5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentMode: 0
+  isBroken: 0
+  breakdownChance: 0.01
   carID: truck_6_green Variant
-  queueNumber: 0
   category: 2
   waypoints: []
   speed: 10
   detectionDistance: 5
   stoppingDistance: 3
   raycastOffset: 2
+  IsInQueue: 0
+  showDebugLogs: 1
+  currentLane: {fileID: 0}
+  rewardMoney: 100
 --- !u!65 &5697044844046482545
 BoxCollider:
   m_ObjectHideFlags: 0

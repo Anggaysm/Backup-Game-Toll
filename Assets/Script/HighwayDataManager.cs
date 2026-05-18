@@ -32,4 +32,18 @@ public class HighwayDataManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+    public void ResetAllData()
+    {
+        savedStrike = 0;
+        savedRescue = 1;
+        savedPurchaseCount = 0;
+
+        for (int i = 0; i < savedLaneHealth.Length; i++)
+        {
+            savedLaneHealth[i] = 100f;
+        }
+
+        Debug.Log("🔥 Highway data reset!");
+    }
 }

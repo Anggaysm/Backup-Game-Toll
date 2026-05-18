@@ -48,6 +48,11 @@ public class GameManager : MonoBehaviour
         if (MoneyManager.instance != null)
             MoneyManager.instance.ResetMoney();
 
+        if (HighwayDataManager.Instance != null)
+        {
+            HighwayDataManager.Instance.ResetAllData();
+        }    
+
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
 
@@ -65,6 +70,11 @@ public class GameManager : MonoBehaviour
         if (MoneyManager.instance != null)
         {
             MoneyManager.instance.ResetMoney();
+        }
+
+        if (HighwayDataManager.Instance != null)
+        {
+            HighwayDataManager.Instance.ResetAllData();
         }
         
         Time.timeScale = 1f;
