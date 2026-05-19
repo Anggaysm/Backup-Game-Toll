@@ -3113,6 +3113,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   laneName: Lane1
   laneIndex: 0
+  laneID: Lane_0
   maxHealth: 100
   currentHealth: 100
   healthDecayRate: 1
@@ -3511,6 +3512,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   laneName: Lane4
   laneIndex: 3
+  laneID: Lane_3
   maxHealth: 100
   currentHealth: 100
   healthDecayRate: 2
@@ -3569,6 +3571,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   laneName: Lane2
   laneIndex: 1
+  laneID: Lane_1
   maxHealth: 100
   currentHealth: 100
   healthDecayRate: 1
@@ -6212,6 +6215,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   laneName: Lane3
   laneIndex: 2
+  laneID: Lane_2
   maxHealth: 100
   currentHealth: 100
   healthDecayRate: 1.8

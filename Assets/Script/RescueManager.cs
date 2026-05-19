@@ -25,6 +25,16 @@ public class RescueManager : MonoBehaviour
     [SerializeField]
     private int availableRescue = 1;
 
+    string GetRescueKey()
+    {
+        return GameData.selectedZone + "_Rescue";
+    }
+
+    string GetPurchaseKey()
+    {
+        return GameData.selectedZone + "_RescuePurchase";
+    }
+
     void Awake()
     {
         if (Instance == null)
@@ -32,19 +42,19 @@ public class RescueManager : MonoBehaviour
         else
             Destroy(gameObject);
 
-        if (HighwayDataManager.Instance != null)
-        {
-            availableRescue =
-                HighwayDataManager.Instance.savedRescue;
+        availableRescue =
+            PlayerPrefs.GetInt(
+                GetRescueKey(),
+                1
+            );
 
-            totalRescue = availableRescue;
-        }
+        totalRescue = availableRescue;
 
-        if (HighwayDataManager.Instance != null)
-        {
-            purchaseCount =
-                HighwayDataManager.Instance.savedPurchaseCount;
-        }
+        purchaseCount =
+            PlayerPrefs.GetInt(
+                GetPurchaseKey(),
+                0
+            );
     }
 
     public int GetAvailableRescue()
@@ -114,17 +124,18 @@ public class RescueManager : MonoBehaviour
         totalRescue++;
 
         purchaseCount++;
-        if (HighwayDataManager.Instance != null)
-        {
-            HighwayDataManager.Instance.savedPurchaseCount =
-                purchaseCount;
-        }
 
-        if (HighwayDataManager.Instance != null)
-        {
-            HighwayDataManager.Instance.savedRescue =
-                availableRescue;
-        }
+        PlayerPrefs.SetInt(
+            GetRescueKey(),
+            availableRescue
+        );
+
+        PlayerPrefs.SetInt(
+            GetPurchaseKey(),
+            purchaseCount
+        );
+
+        PlayerPrefs.Save();
 
         Debug.Log($"✅ Rescue purchased! Total: {totalRescue}");
 

@@ -79,6 +79,11 @@ public class TollGate : MonoBehaviour
     public float restoreYOffset = 0.8f;
     public float restoreSpeedMultiplier = 2.5f;
 
+    string GetSaveKey()
+    {
+        return GameData.selectedZone + "_" + gateID;
+    }
+
     void Start()
     {
         LoadProgress();
@@ -135,14 +140,21 @@ public class TollGate : MonoBehaviour
         if (string.IsNullOrEmpty(gateID)) return;
 
         // Simpan data dasar
-        PlayerPrefs.SetInt(gateID + "_level", level);
-        PlayerPrefs.SetInt(gateID + "_unlock", isUnlocked ? 1 : 0);
-        PlayerPrefs.SetInt(gateID + "_penaltyCount", currentPenaltyCount);
-        
+        PlayerPrefs.SetInt(GetSaveKey() + "_level", level);
+        PlayerPrefs.SetInt(
+            GetSaveKey() + "_unlock",
+            isUnlocked ? 1 : 0
+        );
+        PlayerPrefs.SetInt(
+            GetSaveKey() + "_penaltyCount",
+            currentPenaltyCount
+        );        
         // SIMPLE: Simpan jumlah mobil di queue area
         int queueCount = GetQueueCount();
-        PlayerPrefs.SetInt(gateID + "_queueCount", queueCount);
-        
+        PlayerPrefs.SetInt(
+            GetSaveKey() + "_queueCount",
+            queueCount
+        );        
         if (MoneyManager.instance != null)
         {
             PlayerPrefs.SetInt("TotalMoney", MoneyManager.instance.money);
@@ -157,13 +169,27 @@ public class TollGate : MonoBehaviour
     {
         if (string.IsNullOrEmpty(gateID)) return;
 
-        level = PlayerPrefs.GetInt(gateID + "_level", level);
-        isUnlocked = PlayerPrefs.GetInt(gateID + "_unlock", isUnlocked ? 1 : 0) == 1;
-        currentPenaltyCount = PlayerPrefs.GetInt(gateID + "_penaltyCount", 0);
-        
+        level =
+            PlayerPrefs.GetInt(
+                GetSaveKey() + "_level",
+                level
+            );
+        isUnlocked =
+            PlayerPrefs.GetInt(
+                GetSaveKey() + "_unlock",
+                isUnlocked ? 1 : 0
+            ) == 1;
+        currentPenaltyCount =
+            PlayerPrefs.GetInt(
+                GetSaveKey() + "_penaltyCount",
+                0
+            );        
         // SIMPLE: Load jumlah queue
-        savedQueueCount = PlayerPrefs.GetInt(gateID + "_queueCount", 0);
-
+        savedQueueCount =
+            PlayerPrefs.GetInt(
+                GetSaveKey() + "_queueCount",
+                0
+            );
         Debug.Log($"📥 LOAD SIMPLE {gateID} | Level: {level} | Saved Queue Count: {savedQueueCount}");
     }
 
@@ -257,7 +283,10 @@ public class TollGate : MonoBehaviour
             spawner.StartSpawner();
         }
         
-        PlayerPrefs.SetInt(gateID + "_queueCount", 0);
+        PlayerPrefs.SetInt(
+            GetSaveKey() + "_queueCount",
+            0
+        );
         PlayerPrefs.Save();
         
         Debug.Log($"✅ RESTORE SELESAI! {successfullySpawned}/{savedQueueCount} mobil dispawan");

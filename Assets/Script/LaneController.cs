@@ -6,7 +6,10 @@ public class LaneController : MonoBehaviour
 {
     [Header("Lane Info")]
     public string laneName = "Lane";
-    public int laneIndex;
+    // public int laneIndex;
+
+    [Header("Save")]
+    public string laneID;
 
     [Header("Health Settings")]
     public float maxHealth = 100f;
@@ -32,28 +35,18 @@ public class LaneController : MonoBehaviour
     private bool hasLoadedData = false;
     private float decayTimer = 0f;
 
+    string GetSaveKey()
+    {
+        return GameData.selectedZone + "_" + laneID;
+    }
+
     void Start()
     {
-        if (HighwayDataManager.Instance != null)
-        {
-            float savedHealth =
-                HighwayDataManager.Instance
-                .savedLaneHealth[laneIndex];
-
-            if (savedHealth > 0)
-            {
-                currentHealth = savedHealth;
-            }
-            else
-            {
-                currentHealth = maxHealth;
-            }
-        }
-        
-        else
-        {
-            currentHealth = maxHealth;
-        }
+        currentHealth =
+            PlayerPrefs.GetFloat(
+                GetSaveKey() + "_health",
+                maxHealth
+            );
 
         UpdateUI();
         hasLoadedData = true;
@@ -174,13 +167,11 @@ public class LaneController : MonoBehaviour
     }
     void SaveLaneHealth()
     {
-        if (!hasLoadedData) return;
+        PlayerPrefs.SetFloat(
+            GetSaveKey() + "_health",
+            currentHealth
+        );
 
-        if (HighwayDataManager.Instance != null)
-        {
-            HighwayDataManager.Instance
-                .savedLaneHealth[laneIndex] =
-                currentHealth;
-        }
+        PlayerPrefs.Save();
     }
 }

@@ -2293,7 +2293,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 625686274}
   trafficCanvasGroup: {fileID: 625686273}
-  gateID: Gate_Cililitan_4
+  gateID: Gate4
   queueDetector: {fileID: 646620020}
   carLayer:
     serializedVersion: 2
@@ -3297,7 +3297,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 1892656877}
   trafficCanvasGroup: {fileID: 1892656876}
-  gateID: Gate_Cililitan_3
+  gateID: Gate3
   queueDetector: {fileID: 1340989954}
   carLayer:
     serializedVersion: 2
@@ -3918,7 +3918,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 659353040}
   trafficCanvasGroup: {fileID: 659353039}
-  gateID: Gate_Cililitan_1
+  gateID: Gate1
   queueDetector: {fileID: 121454206}
   carLayer:
     serializedVersion: 2
@@ -5203,7 +5203,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 887911593}
   trafficCanvasGroup: {fileID: 887911592}
-  gateID: Gate_Cililitan_2
+  gateID: Gate2
   queueDetector: {fileID: 1048059368}
   carLayer:
     serializedVersion: 2
@@ -7593,37 +7593,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1268318888}
   m_CullTransparentMesh: 1
---- !u!1 &1271177466
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1271177467}
-  m_Layer: 0
-  m_Name: QueueCheckPoint2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1271177467
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1271177466}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.71, y: 0, z: 10.15}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1278916751
 GameObject:
   m_ObjectHideFlags: 0
@@ -8891,37 +8860,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1602070022}
   m_CullTransparentMesh: 1
---- !u!1 &1656383812
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1656383813}
-  m_Layer: 0
-  m_Name: QueueCheckPoint4
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1656383813
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1656383812}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 9.34, y: 0, z: 10.15}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1717823996
 GameObject:
   m_ObjectHideFlags: 0
@@ -9936,37 +9874,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 330400278}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1881068134
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1881068135}
-  m_Layer: 0
-  m_Name: QueueCheckPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1881068135
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1881068134}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.7, y: 0, z: 10.15}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1892656874
 GameObject:
   m_ObjectHideFlags: 0
@@ -10285,37 +10192,6 @@ Transform:
   - {fileID: 579623395}
   - {fileID: 282918795}
   - {fileID: 1328847476}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1974600653
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1974600654}
-  m_Layer: 0
-  m_Name: QueueCheckPoint3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1974600654
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1974600653}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.37, y: 0, z: 10.15}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2007890701
@@ -11074,10 +10950,6 @@ SceneRoots:
   - {fileID: 135003694}
   - {fileID: 1805267295}
   - {fileID: 525200984}
-  - {fileID: 1881068135}
-  - {fileID: 1271177467}
-  - {fileID: 1974600654}
-  - {fileID: 1656383813}
   - {fileID: 1432541898}
   - {fileID: 1740969200}
   - {fileID: 62595859}

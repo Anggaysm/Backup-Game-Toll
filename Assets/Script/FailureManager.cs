@@ -8,6 +8,11 @@ public class FailureManager : MonoBehaviour
     public int currentStrike = 0;
     public int maxStrike = 3;
 
+    string GetSaveKey()
+    {
+        return GameData.selectedZone + "_Strike";
+    }
+
     void Awake()
     {
         if (Instance == null)
@@ -15,21 +20,22 @@ public class FailureManager : MonoBehaviour
         else
             Destroy(gameObject);
 
-        if (HighwayDataManager.Instance != null)
-        {
-            currentStrike =
-                HighwayDataManager.Instance.savedStrike;
-        }
+        currentStrike =
+            PlayerPrefs.GetInt(
+                GetSaveKey(),
+                0
+            );
     }
 
     public void AddStrike()
     {
         currentStrike++;
-        if (HighwayDataManager.Instance != null)
-        {
-            HighwayDataManager.Instance.savedStrike =
-                currentStrike;
-        }
+        PlayerPrefs.SetInt(
+            GetSaveKey(),
+            currentStrike
+        );
+
+        PlayerPrefs.Save();
 
         Debug.Log($"⚠️ STRIKE {currentStrike}/{maxStrike}");
 
@@ -46,11 +52,12 @@ public class FailureManager : MonoBehaviour
             Debug.Log("✅ Strike streak reset!");
         }
 
-        currentStrike = 0;
-        if (HighwayDataManager.Instance != null)
-        {
-            HighwayDataManager.Instance.savedStrike = 0;
-        }
+        PlayerPrefs.SetInt(
+            GetSaveKey(),
+            0
+        );
+
+        PlayerPrefs.Save();
     }
 
     void GameOver()
