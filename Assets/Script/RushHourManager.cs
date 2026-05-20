@@ -30,6 +30,22 @@ public class RushHourManager : MonoBehaviour
     
     private bool isRushHour = false;
     private float currentTimer;
+
+    [Header("Save System")]
+    public float autoSaveInterval = 5f;
+
+    private float autoSaveTimer = 0f;
+    private bool hasLoadedRushData = false;
+
+    string GetRushActiveKey()
+    {
+        return GameData.selectedZone + "_RushHourActive";
+    }
+
+    string GetRushTimerKey()
+    {
+        return GameData.selectedZone + "_RushHourTimer";
+    }
     
     void Awake()
     {
@@ -45,8 +61,20 @@ public class RushHourManager : MonoBehaviour
         
     void Start()
     {   
-        currentTimer = normalModeDuration;
-        isRushHour = false;
+        isRushHour =
+            PlayerPrefs.GetInt(
+                GetRushActiveKey(),
+                0
+            ) == 1;
+
+        currentTimer =
+            PlayerPrefs.GetFloat(
+                GetRushTimerKey(),
+                normalModeDuration
+            );
+
+        hasLoadedRushData =
+            PlayerPrefs.HasKey(GetRushTimerKey());
         
         // Cari semua spawner dulu
         if (allSpawners == null || allSpawners.Length == 0)
@@ -55,7 +83,14 @@ public class RushHourManager : MonoBehaviour
         }
         
         // Set ke normal dulu (jangan rush hour)
-        SetToNormalMode();
+        if (isRushHour)
+        {
+            StartRushHour(false);
+        }
+        else
+        {
+            SetToNormalMode();
+        }
         
         // Matikan update dulu
         enabled = false; // 🔥 IMPORTANT: Rush hour belum aktif
@@ -65,13 +100,39 @@ public class RushHourManager : MonoBehaviour
 
     public void StartRushHourSystem()
     {
-        enabled = true;  // Aktifkan update
-        currentTimer = normalModeDuration;
-        isRushHour = false;
-        
-        SetToNormalMode();
-        
+        enabled = true;
+
+        if (!hasLoadedRushData)
+        {
+            currentTimer = normalModeDuration;
+            isRushHour = false;
+        }
+
+        if (isRushHour)
+        {
+            StartRushHour(false);
+        }
+        else
+        {
+            SetToNormalMode();
+        }
+
         Debug.Log("✅ RushHourSystem STARTED! Countdown begins...");
+    }
+
+    void SaveRushState()
+    {
+        PlayerPrefs.SetInt(
+            GetRushActiveKey(),
+            isRushHour ? 1 : 0
+        );
+
+        PlayerPrefs.SetFloat(
+            GetRushTimerKey(),
+            currentTimer
+        );
+
+        PlayerPrefs.Save();
     }
     
     void SetToNormalMode()
@@ -96,16 +157,30 @@ public class RushHourManager : MonoBehaviour
     
     void Update()
     {
-        // Cuma jalan kalau enabled = true (setelah StartRushHourSystem dipanggil)
-        if (currentTimer > 0)
+        autoSaveTimer += Time.deltaTime;
+
+        if (autoSaveTimer >= autoSaveInterval)
         {
-            currentTimer -= Time.deltaTime;
-            UpdateTimerUI();
-            
-            if (currentTimer <= 0 && !isRushHour)
-            {
-                StartRushHour();
-            }
+            autoSaveTimer = 0f;
+            SaveRushState();
+        }
+        // Cuma jalan kalau enabled = true (setelah StartRushHourSystem dipanggil)
+        currentTimer -= Time.deltaTime;
+
+        if (currentTimer < 0)
+        {
+            currentTimer = 0;
+        }
+
+        UpdateTimerUI();
+
+        if (!isRushHour && currentTimer <= 0)
+        {
+            StartRushHour();
+        }
+        else if (isRushHour && currentTimer <= 0)
+        {
+            EndRushHour();
         }
         
         if (isRushHour)
@@ -114,10 +189,13 @@ public class RushHourManager : MonoBehaviour
         }
     }
     
-    void StartRushHour()
+    void StartRushHour(bool resetTimer = true)
     {
         isRushHour = true;
-        currentTimer = rushHourDuration;
+        if (resetTimer)
+        {
+            currentTimer = rushHourDuration;
+        }
         
         // Ubah spawn interval semua spawner jadi 2x lebih cepat
         foreach (CarSpawner spawner in allSpawners)
@@ -194,11 +272,6 @@ public class RushHourManager : MonoBehaviour
             timerText.text = $"RUSH HOUR: {seconds}s";
             timerText.color = Color.red;
             timerText.fontSize = 20;
-            
-            if (currentTimer <= 0)
-            {
-                EndRushHour();
-            }
         }
         else
         {

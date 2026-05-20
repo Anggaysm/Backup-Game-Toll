@@ -3,6 +3,15 @@ using UnityEngine.SceneManagement;
 
 public class SceneController : MonoBehaviour
 {
+    [Header("Mode Select UI")]
+    public UnityEngine.UI.Button highwayButton;
+
+    public GameObject lockOverlay;
+
+    [Header("Unlock Settings")]
+    public int totalGateRequired = 4;
+
+
     // =========================
     // 🔹 BASIC LOAD
     // =========================
@@ -87,6 +96,41 @@ public class SceneController : MonoBehaviour
         {
             SceneManager.LoadScene("LalinTol_Bogor");
         }
+    }
+
+    void Start()
+    {
+        CheckHighwayUnlock();
+    }
+
+    void CheckHighwayUnlock()
+    {
+        if (highwayButton == null || lockOverlay == null)
+            return;
+
+        bool allUnlocked = true;
+
+        for (int i = 1; i <= totalGateRequired; i++)
+        {
+            string saveKey =
+                GameData.selectedZone +
+                "_Gate_" +
+                i +
+                "_unlock";
+
+            bool isUnlocked =
+                PlayerPrefs.GetInt(saveKey, 0) == 1;
+
+            if (!isUnlocked)
+            {
+                allUnlocked = false;
+                break;
+            }
+        }
+
+        highwayButton.interactable = allUnlocked;
+
+        lockOverlay.SetActive(!allUnlocked);
     }
 
 }

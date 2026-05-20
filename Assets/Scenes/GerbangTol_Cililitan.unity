@@ -1223,6 +1223,7 @@ MonoBehaviour:
   rushHourSpawnMin: 0.5
   rushHourSpawnMax: 2
   timerText: {fileID: 12449867}
+  autoSaveInterval: 5
 --- !u!4 &309365721
 Transform:
   m_ObjectHideFlags: 0
@@ -2293,7 +2294,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 625686274}
   trafficCanvasGroup: {fileID: 625686273}
-  gateID: Gate4
+  gateID: Gate_4
   queueDetector: {fileID: 646620020}
   carLayer:
     serializedVersion: 2
@@ -3297,7 +3298,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 1892656877}
   trafficCanvasGroup: {fileID: 1892656876}
-  gateID: Gate3
+  gateID: Gate_3
   queueDetector: {fileID: 1340989954}
   carLayer:
     serializedVersion: 2
@@ -3918,7 +3919,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 659353040}
   trafficCanvasGroup: {fileID: 659353039}
-  gateID: Gate1
+  gateID: Gate_1
   queueDetector: {fileID: 121454206}
   carLayer:
     serializedVersion: 2
@@ -5203,7 +5204,7 @@ MonoBehaviour:
   jamThreshold: 2
   trafficText: {fileID: 887911593}
   trafficCanvasGroup: {fileID: 887911592}
-  gateID: Gate2
+  gateID: Gate_2
   queueDetector: {fileID: 1048059368}
   carLayer:
     serializedVersion: 2
@@ -9056,6 +9057,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 523cdee56e4b3eb49af1b4d5f86f1a64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  highwayButton: {fileID: 0}
+  lockOverlay: {fileID: 0}
+  totalGateRequired: 4
 --- !u!4 &1740969200
 Transform:
   m_ObjectHideFlags: 0
