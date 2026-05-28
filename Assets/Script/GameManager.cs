@@ -58,6 +58,35 @@ public class GameManager : MonoBehaviour
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
+    public void RestartToModeSelect()
+    {
+        Debug.Log("FULL RESET → Mode Select");
+
+        Time.timeScale = 1f;
+
+        // RESET SAVE
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        // RESET MONEY
+        if (MoneyManager.instance != null)
+        {
+            MoneyManager.instance.ResetMoney();
+        }
+
+        // RESET HIGHWAY DATA
+        if (HighwayDataManager.Instance != null)
+        {
+            HighwayDataManager.Instance.ResetAllData();
+        }
+
+        // Tutup panel
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+
+        // Kembali ke mode select
+        SceneManager.LoadScene("ModeSelect");
+    }
     
     public void GoToHome()
     {

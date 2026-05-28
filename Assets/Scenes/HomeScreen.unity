@@ -930,6 +930,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 523cdee56e4b3eb49af1b4d5f86f1a64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  highwayButton: {fileID: 0}
+  lockOverlay: {fileID: 0}
+  totalGateRequired: 4
 --- !u!4 &498927831
 Transform:
   m_ObjectHideFlags: 0
@@ -1263,16 +1266,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07b24cb87ab6a86449c933ff37705b0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  savedLaneHealth:
-  - 0
-  - 0
-  - 0
-  - 0
-  savedStrike: 0
-  savedRescue: 1
   wasRushHour: 0
   savedRushTimer: 0
-  savedPurchaseCount: 0
 --- !u!4 &1025515198
 Transform:
   m_ObjectHideFlags: 0
@@ -1573,7 +1568,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4b1aab7133f5a9b43a4a5a1a835b6f03, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 048371f747d9e3f408858836a7d6997a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1826,7 +1821,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 711d97c6695ba6e4da0b84bbee6e3841, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a2c7bed4bc437264397b3b1ee9fd88b4, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2003,7 +1998,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 6c9ada2662ddcb4478e88e8c87b41f16, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ab6336b4cd5e3134a96b0ca28e645d66, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

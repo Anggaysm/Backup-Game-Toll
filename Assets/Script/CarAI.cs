@@ -186,8 +186,12 @@ public class CarAI : MonoBehaviour
                 {
                     IsInQueue = false;
                 }
-                GiveReward();
-                DestroyCar();
+        if (currentMode == CarMode.Highway)
+        {
+            GiveReward();
+        }
+
+        DestroyCar();
             }
         }
     }

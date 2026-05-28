@@ -27,7 +27,7 @@ public class RescueUI : MonoBehaviour
             RescueManager.Instance.GetRescueCost();
 
         buyButtonText.text =
-            $"BUY RESCUE\n{cost}";
+            $"{cost}";
         if (RescueManager.Instance.totalRescue >=
             RescueManager.Instance.maxRescue)
         {

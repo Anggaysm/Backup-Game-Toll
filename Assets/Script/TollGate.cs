@@ -253,7 +253,7 @@ public class TollGate : MonoBehaviour
                     {
                         float progress = (float)successfullySpawned / savedQueueCount;
                         int percent = Mathf.RoundToInt(progress * 100f);
-                        LoadingManager.instance.UpdateMessage($"Restoring: {percent}%");
+                        LoadingManager.instance.UpdateProgress(progress);
                     }
                     
                     Debug.Log($"🚗 RESTORE MOBIL KE-{successfullySpawned} dari {savedQueueCount}");
@@ -610,12 +610,24 @@ public class TollGate : MonoBehaviour
         }
     }
 
+    string GetGateTypeName()
+    {
+        switch (level)
+        {
+            case 1: return "";
+            case 2: return "E-Money";
+            case 3: return "RFID";
+            case 4: return "MLFF";
+            default: return "";
+        }
+    }
+
     void UpdateUI()
     {
         if (isUnlocked)
         {
             unlockButton.SetActive(false);
-            levelText.text = "Gate Lv." + level;
+            levelText.text = GetGateTypeName();
 
             if (level >= maxLevel)
             {
@@ -627,7 +639,7 @@ public class TollGate : MonoBehaviour
                 upgradeButton.SetActive(true);
                 if (maxLevelText != null) maxLevelText.SetActive(false);
                 int cost = GetUpgradeCost();
-                upgradeText.text = "Upgrade\n(" + cost + ")";
+                upgradeText.text = "(" + cost + ")";
                 bool canUpgrade = MoneyManager.instance != null && MoneyManager.instance.money >= cost;
                 SetButtonState(upgradeButton.GetComponent<Button>(), canUpgrade);
             }
@@ -641,7 +653,7 @@ public class TollGate : MonoBehaviour
             if (payButton != null) payButton.SetActive(false);
             if (maxLevelText != null) maxLevelText.SetActive(false);
             levelText.text = "Locked";
-            unlockText.text = "Buka Pintu\n(" + unlockCost + ")";
+            unlockText.text = "(" + unlockCost + ")";
             bool canUnlock = MoneyManager.instance != null && MoneyManager.instance.money >= unlockCost;
             SetButtonState(unlockButton.GetComponent<Button>(), canUnlock);
         }
