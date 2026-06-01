@@ -373,7 +373,10 @@ public class TollGate : MonoBehaviour
             MoneyManager.instance.AddMoney(money);
         
         if (audioSource != null && moneySound != null)
-            audioSource.PlayOneShot(moneySound, 0.5f);
+            audioSource.PlayOneShot(
+                moneySound,
+                0.5f * BGMManager.SFXVolume
+            );
         
         Debug.Log($"💰 +{money} | Total: {(MoneyManager.instance != null ? MoneyManager.instance.money : 0)}");
 
@@ -683,7 +686,10 @@ public class TollGate : MonoBehaviour
             
             // MAINTAIN SOUND
             if (audioSource != null && unlockSound != null)
-                audioSource.PlayOneShot(unlockSound);
+                audioSource.PlayOneShot(
+                    unlockSound,
+                    BGMManager.SFXVolume
+                );
             
             // TAMPILKAN FLOATING TEXT (SUDAH OK)
             ShowWarningText("GATE OPEN", Color.cyan);
@@ -716,7 +722,10 @@ public class TollGate : MonoBehaviour
             level++;
             
             if (audioSource != null && upgradeSound != null)
-                audioSource.PlayOneShot(upgradeSound);
+                audioSource.PlayOneShot(
+                    upgradeSound,
+                    BGMManager.SFXVolume
+                );
             
             // TAMPILKAN FLOATING TEXT
             ShowWarningText($"UPGRADE\nLEVEL {level}", Color.green);
