@@ -36,6 +36,7 @@ public class RushHourManager : MonoBehaviour
 
     private float autoSaveTimer = 0f;
     private bool hasLoadedRushData = false;
+    public RushHourAlertManager alertManager;
 
     string GetRushActiveKey()
     {
@@ -174,6 +175,18 @@ public class RushHourManager : MonoBehaviour
 
         UpdateTimerUI();
 
+        if (!isRushHour &&
+            currentTimer <= 5f)
+        {
+            alertManager.ShowRushInfo();
+        }
+
+        if (!isRushHour &&
+            currentTimer <= 3f)
+        {
+            alertManager.ShowRushWarning();
+        }
+
         if (!isRushHour && currentTimer <= 0)
         {
             StartRushHour();
@@ -191,6 +204,7 @@ public class RushHourManager : MonoBehaviour
     
     void StartRushHour(bool resetTimer = true)
     {
+        alertManager.ShowRushStarted();
         isRushHour = true;
         if (resetTimer)
         {
