@@ -213,7 +213,7 @@ MonoBehaviour:
   isBroken: 0
   breakdownChance: 0.01
   carID: SportsCar2
-  category: 2
+  category: 0
   waypoints: []
   speed: 10
   detectionDistance: 4
@@ -222,7 +222,7 @@ MonoBehaviour:
   IsInQueue: 0
   showDebugLogs: 1
   currentLane: {fileID: 0}
-  rewardMoney: 100
+  rewardMoney: 15
 --- !u!65 &8179935739259520790
 BoxCollider:
   m_ObjectHideFlags: 0

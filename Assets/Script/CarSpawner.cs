@@ -35,6 +35,8 @@ public class CarSpawner : MonoBehaviour
     // Track spawned cars for restore purposes
     private List<GameObject> spawnedCars = new List<GameObject>();
 
+    private bool spawnBlockedPenaltyGiven = false;
+
     void Start()
     {
         currentSpawnInterval = spawnInterval;
@@ -116,7 +118,7 @@ public class CarSpawner : MonoBehaviour
         float distanceToNearestCar = GetDistanceToNearestCar();
         
         bool isQueueNotFull = activeCarsCount < maxCarsInQueue;
-        bool hasEnoughSpace = distanceToNearestCar >= 3f;
+        bool hasEnoughSpace = distanceToNearestCar >= 2f;
         
         bool safeToSpawn = isQueueNotFull && hasEnoughSpace;
         
@@ -137,17 +139,29 @@ public class CarSpawner : MonoBehaviour
         {
             bool safeToSpawn = IsSafeToSpawn();
             
-            if (safeToSpawn)
+        if (safeToSpawn)
+        {
+            spawnBlockedPenaltyGiven = false;
+
+            SpawnCar();
+        }
+        else
+        {
+            if (!spawnBlockedPenaltyGiven)
             {
-                if (showDebugLogs)
-                    Debug.Log("🏭 Spawning new car...");
-                SpawnCar();
-                currentSpawnInterval = Random.Range(minSpawnInterval, maxSpawnInterval);
+                TollGate gate =
+                    GetComponentInParent<TollGate>();
+
+                if (gate != null)
+                {
+                    gate.ApplyPenalty();
+                }
+
+                spawnBlockedPenaltyGiven = true;
             }
-            else
-            {
-                currentSpawnInterval = 0.5f;
-            }
+
+            currentSpawnInterval = 0.5f;
+        }
 
             yield return new WaitForSeconds(currentSpawnInterval);
         }
@@ -539,5 +553,45 @@ public class CarSpawner : MonoBehaviour
     public void ClearLastSpawnedCar()
     {
         lastSpawnedCar = null;
+    }
+
+    public void SetSpawnRateByLevel(int gateLevel)
+    {
+        switch (gateLevel)
+        {
+            case 1:
+                // Default
+                minSpawnInterval = 1.0f;
+                maxSpawnInterval = 4.0f;
+                maxCarsInQueue = 3;
+                break;
+
+            case 2:
+                // +1 tingkat
+                minSpawnInterval = 0.9f;
+                maxSpawnInterval = 3.6f;
+                maxCarsInQueue = 3;
+                break;
+
+            case 3:
+                // +1 tingkat lagi
+                minSpawnInterval = 0.8f;
+                maxSpawnInterval = 3.2f;
+                maxCarsInQueue = 4;
+                break;
+
+            case 4:
+                // Gate maksimal
+                minSpawnInterval = 0.7f;
+                maxSpawnInterval = 2.8f;
+                maxCarsInQueue = 4;
+                break;
+        }
+
+        Debug.Log(
+            $"🚗 Gate Level {gateLevel} | " +
+            $"Queue: {maxCarsInQueue} | " +
+            $"Spawn: {minSpawnInterval}-{maxSpawnInterval}"
+        );
     }
 }

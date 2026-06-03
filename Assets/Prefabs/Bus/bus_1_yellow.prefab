@@ -207,9 +207,9 @@ MonoBehaviour:
   isBroken: 0
   breakdownChance: 0.01
   carID: bus_1_yellow
-  category: 2
+  category: 1
   waypoints: []
-  speed: 10
+  speed: 30
   detectionDistance: 5
   stoppingDistance: 2
   raycastOffset: 2

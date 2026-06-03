@@ -213,7 +213,7 @@ MonoBehaviour:
   isBroken: 0
   breakdownChance: 0.01
   carID: SUV
-  category: 3
+  category: 0
   waypoints: []
   speed: 10
   detectionDistance: 4
@@ -222,7 +222,7 @@ MonoBehaviour:
   IsInQueue: 0
   showDebugLogs: 1
   currentLane: {fileID: 0}
-  rewardMoney: 100
+  rewardMoney: 15
 --- !u!65 &-8476272857156938801
 BoxCollider:
   m_ObjectHideFlags: 0

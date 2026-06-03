@@ -23,7 +23,7 @@ public class CarAI : MonoBehaviour
         Category1,
         Category2,
         Category3,
-        Category4
+
     }
 
     [Header("Car Identity")]
@@ -209,10 +209,9 @@ public class CarAI : MonoBehaviour
     {
         switch (category)
         {
-            case CarCategory.Category1: return 0;
-            case CarCategory.Category2: return 1000;
-            case CarCategory.Category3: return 2500;
-            case CarCategory.Category4: return 4000;
+            case CarCategory.Category1: return 15;
+            case CarCategory.Category2: return 30;
+            case CarCategory.Category3: return 40;
             default: return 0;
         }
     }

@@ -94,6 +94,11 @@ public class TollGate : MonoBehaviour
             if (isUnlocked) spawner.StartSpawner();
         }
 
+        if (spawner != null)
+        {
+            spawner.SetSpawnRateByLevel(level);
+        }
+
         if (savedQueueCount > 0)
         {
             LoadingManager.instance.ShowLoading("Loading Traffic...");
@@ -567,7 +572,7 @@ public class TollGate : MonoBehaviour
         Destroy(ft, 1.5f);
     }
 
-    void ApplyPenalty()
+    public void ApplyPenalty()
     {
         currentPenaltyCount++;
         
@@ -683,6 +688,13 @@ public class TollGate : MonoBehaviour
         {
             MoneyManager.instance.SpendMoney(unlockCost);
             isUnlocked = true;
+            GateVisualManager visual =
+                FindFirstObjectByType<GateVisualManager>();
+
+            if (visual != null)
+            {
+                visual.RefreshGateVisual();
+            }
             
             // MAINTAIN SOUND
             if (audioSource != null && unlockSound != null)
@@ -720,6 +732,11 @@ public class TollGate : MonoBehaviour
         {
             MoneyManager.instance.SpendMoney(cost);
             level++;
+
+            if (spawner != null)
+            {
+                spawner.SetSpawnRateByLevel(level);
+            }
             
             if (audioSource != null && upgradeSound != null)
                 audioSource.PlayOneShot(

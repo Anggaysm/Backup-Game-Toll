@@ -226,7 +226,7 @@ MonoBehaviour:
   IsInQueue: 0
   showDebugLogs: 1
   currentLane: {fileID: 0}
-  rewardMoney: 100
+  rewardMoney: 15
 --- !u!65 &814896772623721117
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -218,7 +218,7 @@ MonoBehaviour:
   isBroken: 0
   breakdownChance: 0.01
   carID: NormalCar1
-  category: 1
+  category: 0
   waypoints: []
   speed: 10
   detectionDistance: 6
@@ -227,7 +227,7 @@ MonoBehaviour:
   IsInQueue: 0
   showDebugLogs: 1
   currentLane: {fileID: 0}
-  rewardMoney: 100
+  rewardMoney: 15
 --- !u!65 &4015189265530314991
 BoxCollider:
   m_ObjectHideFlags: 0
